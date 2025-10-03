@@ -1,0 +1,6 @@
+{
+    "broker": "mqtt.example.com",
+    "port": 8883,
+    "user": "YOUR_MQTT_USER",
+    "password": "YOUR_MQTT_PASSWORD"
+}
