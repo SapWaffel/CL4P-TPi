@@ -23,4 +23,3 @@ class ReloadCog(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(ReloadCog(bot))
-    RelevanceLogger.write_log_entry("cog.reload - loaded", "system", LogType.INFO)

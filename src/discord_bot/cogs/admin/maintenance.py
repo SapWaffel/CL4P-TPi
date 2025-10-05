@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from src.config_manager import ConfigManager
 from src.discord_bot.util.is_admin_on_guild import is_admin_on_guild
+from src.discord_bot.util.refresh_presence import refresh_presence
 from src.discord_bot.logs.rl_log.log_handler import RelevanceLogger, LogType
 
 class MaintenanceCog(commands.Cog):
@@ -28,7 +29,7 @@ class MaintenanceCog(commands.Cog):
 
         await ctx.send(ConfigManager.get_config("strings")["response"]["maintenance"][str(new_maintenance).lower()])
         RelevanceLogger.write_log_entry(f"cmd.maintenance - success (set to {new_maintenance})", ctx.author.id, LogType.INFO)
+        await refresh_presence(self.bot)
 
 async def setup(bot):
     await bot.add_cog(MaintenanceCog(bot))
-    RelevanceLogger.write_log_entry("cog.maintenance - loaded", "system", LogType.INFO)

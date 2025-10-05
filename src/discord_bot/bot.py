@@ -9,11 +9,11 @@ from discord.ext import commands
 import asyncio
 
 from src.config_manager import ConfigManager
-from src.discord_bot.logs.rl_log import RelevanceLogger, LogType
-from src.discord_bot.util.get_random_quote import get_random_quote
+from src.discord_bot.logs.rl_log.log_handler import RelevanceLogger, LogType
+from src.discord_bot.util.refresh_presence import refresh_presence
 from src.discord_bot.util.is_admin_on_guild import is_admin_on_guild
 
-from util.custom_help_command import CustomHelpCommand
+from src.discord_bot.util.custom_help_command import CustomHelpCommand
 
 # CONFIG
 config = ConfigManager.get_config('discord_bot')
@@ -26,9 +26,17 @@ RelevanceLogger.create_log_file()
 RelevanceLogger.write_log_entry("Bot is starting...", "SYSTEM")
 
 # DISCORD NATIVE LOGGING
-current_time = time.strftime("%Y-%m-%d_%H-%M-%S")
-discord_log_file_name = f"discord_{current_time}"
-discord_log_handler = logging.FileHandler(filename=f'config/logs/discord_log/{discord_log_file_name}.log', encoding='utf-8', mode='w')
+discord_log_dir = 'config/logs/discord_log'
+os.makedirs(discord_log_dir, exist_ok=True)  # Verzeichnis anlegen, falls nicht vorhanden
+
+discord_log_file_name = f'discord_{time.strftime("%Y-%m-%d_%H-%M-%S")}'
+
+discord_log_handler = logging.FileHandler(
+    filename=f'{discord_log_dir}/{discord_log_file_name}.log',
+    encoding='utf-8',
+    mode='w'
+)
+
 # remove old log files
 max_log_files = config["max_log_files"]
 log_files = sorted([f for f in os.listdir('config/logs/discord_log') if f.startswith('discord_') and f.endswith('.log')])
@@ -51,15 +59,12 @@ async def on_ready():
     logging.info(f'Logged in as {bot.user.name} (ID: {bot.user.id})')
     RelevanceLogger.write_log_entry(f"Bot is ready as {bot.user.name} (ID: {bot.user.id})", "SYSTEM")
 
-    # presenece
     if MAINTENANCE:
-        RelevanceLogger.write_log_entry("Bot is in maintenance mode", "SYSTEM", type=LogType.WARNING)
-        await bot.change_presence(activity=None, status=discord.Status.do_not_disturb)
         await bot.application.edit(description="Currently in maintenance mode.")
-    else:
-        await bot.change_presence(activity=discord.Game(name="Borderlands 3"), status=discord.Status.online)
-        await bot.application.edit(description=get_random_quote())
-        RelevanceLogger.write_log_entry("Bot is online and operational", "SYSTEM")
+    RelevanceLogger.write_log_entry("Bot is online and operational", "SYSTEM")
+
+    # Presence
+    await refresh_presence(bot)
     
 @bot.event
 async def on_message(message):
@@ -70,10 +75,10 @@ async def on_message(message):
     cmd_channel_name = config["commands_channel_name"]
     if isinstance(message.channel, discord.TextChannel) and message.channel.name != cmd_channel_name:
         await message.delete()
-        await message.channel.send(f"{message.author.mention} {ConfigManager.get_config("strings")['error']['wrong_channel'].replace('{channel}', cmd_channel_name)}", delete_after=10)
+        await message.channel.send(f"{message.author.mention} {ConfigManager.get_config('strings')['error']['wrong_channel'].replace('{channel}', cmd_channel_name)}", delete_after=10)
         return
-   # maintenance mode
-    if MAINTENANCE:
+   # maintenance mode (ignore admins, ignore help command)
+    if MAINTENANCE and not await is_admin_on_guild(bot, message.author.id) and not message.content.startswith(f"{PREFIX}help"):
         await message.channel.send(f"{ConfigManager.get_config('strings')['error']['maintenance']}")
         RelevanceLogger.write_log_entry(f"{message.author}", "attempt to use bot refused (maintenance)", type=LogType.WARNING)
         return
@@ -107,12 +112,16 @@ async def on_command_error(ctx, error):
     
 # LOAD COGS
 async def load_cogs():
-    #/src/discord_bot/cogs or deeper directory levels
-    for root, dirs, files in os.walk('./src/discord_bot/cogs'):
+    base_package = "src.discord_bot.cogs"
+    base_dir = os.path.join(os.path.dirname(__file__), "cogs")
+    for root, dirs, files in os.walk(base_dir):
         for filename in files:
-            if filename.endswith('.py'):
+            if filename.endswith('.py') and not filename.startswith('__'):
                 try:
-                    await bot.load_extension(f'src.discord_bot.cogs.{filename[:-3]}')
+                    rel_path = os.path.relpath(os.path.join(root, filename), base_dir)
+                    module_path = rel_path.replace(os.sep, '.')[:-3]  # remove .py
+                    cog_path = f"{base_package}.{module_path}"
+                    await bot.load_extension(cog_path)
                     RelevanceLogger.write_log_entry(f"Loaded cog: {filename}", "SYSTEM")
                 except Exception as e:
                     RelevanceLogger.write_log_entry(f"Failed to load cog: {filename} ({str(e)})", "SYSTEM", type=LogType.ERROR)

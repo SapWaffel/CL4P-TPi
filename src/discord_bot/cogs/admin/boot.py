@@ -34,4 +34,3 @@ class BootCog(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(BootCog(bot))
-    RelevanceLogger.write_log_entry("cog.boot - loaded", "system", LogType.INFO)

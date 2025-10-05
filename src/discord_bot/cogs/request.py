@@ -40,4 +40,3 @@ class RequestCog(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(RequestCog(bot))
-    RelevanceLogger.write_log_entry("cog.request - loaded", "system", LogType.INFO)

@@ -30,3 +30,6 @@ class PrintLogCog(commands.Cog):
         except Exception as e:
             await ctx.send(ConfigManager.get_config("strings")["response"]["print_log"]["error"].replace("{error}", str(e)))
         return
+    
+async def setup(bot):
+    await bot.add_cog(PrintLogCog(bot))

@@ -12,9 +12,8 @@ class StatusCog(commands.Cog):
     async def status(self, ctx):
         status = MqttManager.read("status")
         if status == "starting": status = "am booten"
-        await ctx.send(ConfigManager.get_config("strings")["response"]["status"].replace("{status}", status))
+        await ctx.send(ConfigManager.get_config("strings")["response"]["status"].replace("{status}", str(status)))
         RelevanceLogger.write_log_entry(f"cmd.status - success ({status})", ctx.author.id, LogType.INFO)
 
 async def setup(bot):
     await bot.add_cog(StatusCog(bot))
-    RelevanceLogger.write_log_entry("cog.status - loaded", "system", LogType.INFO)

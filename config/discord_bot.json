@@ -1,5 +1,5 @@
 {
-    "maintenance": false,
+    "maintenance": true,
     "prefix": "!",
     "token": "YOUR_DISCORD_BOT_TOKEN",
     "guild_id": "YOUR_GUILD_ID",
@@ -15,7 +15,7 @@
         "I wonder what it's like to have a belly button?",
         "AND THEN YOU WILL DANCE FOR MY ENJOYMENT!!!! HAHAHAHAHAHA",
         "SSSSSSTTTRRRAAAAAAIIIIIIIIIIIIRRRRRRSSSSSSSSSSS......i hate stairs",
-        "Rawr. I’m a sexy dinosaur!",
+        "Rawr. I\u2019m a sexy dinosaur!",
         "Standing on immobile platforms is one of my top three favorite pastimes! Right behind dancing and crying.",
         "STAAAAAAIIIRRRSSS?! NOOOOOOOOOOO!!",
         "Let's tear this planet a new    hole!!!",
@@ -28,9 +28,9 @@
         "Wanna hear the new dubstep song I wrote? Wub wub wub wub wub wub wub wub wub wub wub wub wub wub DROP!          Wub wub wub wub wub wub wub wub.",
         "You know, this whole last-of-my-kind thing isn't so bad. Gives me a lot of \"me\" time, you know? Time to think things over, defrag my hard drive, wonder if there is a robot heaven and, if so, whether my Claptrap brethren are in it -- you know, stuff like that. It involves lots of crying.",
         "Did you know my head is at your crotch level? I'm trying not to think about it.",
-        "Ooh -- are you collecting Bullymong fur? I LOVE that stuff! It’s soft, warm, and really good at absorbing robot tears!",
+        "Ooh -- are you collecting Bullymong fur? I LOVE that stuff! It\u2019s soft, warm, and really good at absorbing robot tears!",
         "STAIRS?! GOD DAAAAAAAAAAAAAAAAAAAAAMN IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIT!!!!!",
-        "This glacier’s run by a bandit named Captain Flynt. The jerk kept me as his torture plaything for a few months. We played games like \"dodge the blowtorch\", and \"don’t get dunked into the pool of acid\". I was really good at the first one.",
-        "What have you DONE?! These were human beings with lives and families and-- I’m totally kidding, SCREW those guys!"
+        "This glacier\u2019s run by a bandit named Captain Flynt. The jerk kept me as his torture plaything for a few months. We played games like \"dodge the blowtorch\", and \"don\u2019t get dunked into the pool of acid\". I was really good at the first one.",
+        "What have you DONE?! These were human beings with lives and families and-- I\u2019m totally kidding, SCREW those guys!"
     ]
 }

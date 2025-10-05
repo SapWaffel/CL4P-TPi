@@ -1,6 +1,7 @@
 from src.config_manager import ConfigManager
 import paho.mqtt.client as mqtt
-import threading
+import threading, time, ssl
+from src.discord_bot.logs.rl_log.log_handler import RelevanceLogger, LogType
 
 class MqttManager:
     _cache = {}
@@ -12,8 +13,13 @@ class MqttManager:
     def connect(cls):
         if cls._client is not None:
             return
-        config = ConfigManager.get_config('mqtt')
+        config = ConfigManager.get_config(module='mqtt')
+        RelevanceLogger.write_log_entry(config, "SYSTEM", LogType.INFO)
         cls._client = mqtt.Client()
+        cls.context = ssl.create_default_context()
+        cls.context.check_hostname = False
+        cls.context.verify_mode = ssl.CERT_NONE
+        cls._client.tls_set_context(cls.context)  # <--- Das fehlt!
         cls._client.username_pw_set(config['user'], config['password'])
         cls._client.on_message = cls._on_message
         cls._client.connect(config['broker'], config['port'])
@@ -29,6 +35,9 @@ class MqttManager:
     @classmethod
     def read(cls, subject):
         cls.connect()
+        time.sleep(0.1)
         full_topic = cls._topic_prefix + subject
+        print(full_topic)
         with cls._lock:
             return cls._cache.get(full_topic)
+

@@ -3,19 +3,21 @@ import json
 import os
 
 class ConfigManager:
-    _config = None
+    _configs = {}
 
     @classmethod
     def get_config(cls, module):
-        if cls._config is None:
-            with open(os.path.join(os.path.dirname(__file__), '../config', f'{module}.json')) as f:
-                cls._config = json.load(f)
-        return cls._config
+        if module not in cls._configs:
+            config_path = os.path.join(os.path.dirname(__file__), '../config', f'{module}.json')
+            with open(config_path, encoding="utf-8") as f:
+                cls._configs[module] = json.load(f)
+        return cls._configs[module]
     
     @classmethod
     def merge_config(cls, module, new_data):
         config = cls.get_config(module)
         config.update(new_data)
-        with open(os.path.join(os.path.dirname(__file__), '../config', f'{module}.json'), 'w') as f:
+        config_path = os.path.join(os.path.dirname(__file__), '../config', f'{module}.json')
+        with open(config_path, 'w', encoding="utf-8") as f:
             json.dump(config, f, indent=4)
-        cls._config = config
+        cls._configs[module] = config

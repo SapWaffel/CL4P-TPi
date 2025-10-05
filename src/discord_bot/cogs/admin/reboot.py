@@ -34,4 +34,3 @@ class RebootCog(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(RebootCog(bot))
-    RelevanceLogger.write_log_entry("cog.reboot - loaded", "system", LogType.INFO)
