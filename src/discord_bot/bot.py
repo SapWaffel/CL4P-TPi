@@ -8,12 +8,13 @@ import discord
 from discord.ext import commands
 import asyncio
 
-from src.config_manager import ConfigManager
+from src.config_manager import ConfigManager, StringManager, StringType
 from src.discord_bot.logs.rl_log.log_handler import RelevanceLogger, LogType
 from src.discord_bot.util.refresh_presence import refresh_presence
 from src.discord_bot.util.is_admin_on_guild import is_admin_on_guild
 
 from src.discord_bot.util.custom_help_command import CustomHelpCommand
+from src.discord_bot.util.respond_after_reload import respond_after_reload
 
 # CONFIG
 config = ConfigManager.get_config('discord_bot')
@@ -26,7 +27,7 @@ RelevanceLogger.create_log_file()
 RelevanceLogger.write_log_entry("Bot is starting...", "SYSTEM")
 
 # DISCORD NATIVE LOGGING
-discord_log_dir = 'config/logs/discord_log'
+discord_log_dir = 'src/discord_bot/logs/discord_log'
 os.makedirs(discord_log_dir, exist_ok=True)  # Verzeichnis anlegen, falls nicht vorhanden
 
 discord_log_file_name = f'discord_{time.strftime("%Y-%m-%d_%H-%M-%S")}'
@@ -39,11 +40,10 @@ discord_log_handler = logging.FileHandler(
 
 # remove old log files
 max_log_files = config["max_log_files"]
-log_files = sorted([f for f in os.listdir('config/logs/discord_log') if f.startswith('discord_') and f.endswith('.log')])
+log_files = sorted([f for f in os.listdir(discord_log_dir) if f.startswith('discord_') and f.endswith('.log')])
 if len(log_files) > max_log_files:
     for old_file in log_files[:-max_log_files]:
-        os.remove(os.path.join('config/logs/discord_log', old_file))
-        RelevanceLogger.write_log_entry("CL4P-TP Bot", f"Removed old log file: {old_file}")
+        os.remove(os.path.join(discord_log_dir, old_file))
 
 # BOT INTENTS
 intents = discord.Intents.default()
@@ -65,7 +65,12 @@ async def on_ready():
 
     # Presence
     await refresh_presence(bot)
-    
+
+    # Check for reload response
+    reload_response = ConfigManager.get_config('discord_bot')["reload_response"]
+    if reload_response["waiting_for_response"] and reload_response["user"] is not None:
+        await respond_after_reload(bot, reload_response["user"])
+        
 @bot.event
 async def on_message(message):
     # ignore bot messages
@@ -75,11 +80,12 @@ async def on_message(message):
     cmd_channel_name = config["commands_channel_name"]
     if isinstance(message.channel, discord.TextChannel) and message.channel.name != cmd_channel_name:
         await message.delete()
-        await message.channel.send(f"{message.author.mention} {ConfigManager.get_config('strings')['error']['wrong_channel'].replace('{channel}', cmd_channel_name)}", delete_after=10)
+        await message.channel.send(StringManager.get_string(StringType.INFO, "error.wrong_channel", channel=cmd_channel_name), delete_after=10)
+
         return
    # maintenance mode (ignore admins, ignore help command)
     if MAINTENANCE and not await is_admin_on_guild(bot, message.author.id) and not message.content.startswith(f"{PREFIX}help"):
-        await message.channel.send(f"{ConfigManager.get_config('strings')['error']['maintenance']}")
+        await message.channel.send(StringManager.get_string(StringType.WARNING, "error.maintenance"))
         RelevanceLogger.write_log_entry(f"{message.author}", "attempt to use bot refused (maintenance)", type=LogType.WARNING)
         return
     # process commands
@@ -89,25 +95,25 @@ async def on_message(message):
 async def on_command_error(ctx, error):
     # unknown command
     if isinstance(error, commands.CommandNotFound):
-        await ctx.send(f"{ConfigManager.get_config('strings')['error']['unknown_command']}").replace('{prefix}', PREFIX)
-        RelevanceLogger.write_log_entry(f"{ctx.author}", f"cmd.{ctx.command} failed (unknown command)", type=LogType.INFO)
+        await ctx.send(StringManager.get_string(StringType.ERROR, "error.unknown_command", prefix=PREFIX))
+        RelevanceLogger.write_log_entry(f"cmd.{ctx.command} failed (unknown command)", f"{ctx.author}", type=LogType.INFO)
         return
     # only in pms
     elif isinstance(error, commands.PrivateMessageOnly):
-        RelevanceLogger.write_log_entry(f"{ctx.author}", f"cmd.{ctx.command} failed (private message only)", type=LogType.INFO)
+        RelevanceLogger.write_log_entry(f"cmd.{ctx.command} failed (private message only)", f"{ctx.author}", type=LogType.INFO)
         if is_admin_on_guild(bot, ctx.author.id):
-            await ctx.send(f"{ConfigManager.get_config('strings')['error']['private_message_only']}")
+            await ctx.send(StringManager.get_string(StringType.ERROR, "error.private_message_only"))
         else:
-            await ctx.send(f"{ConfigManager.get_config('strings')['error']['no_permission']}")
+            await ctx.send(StringManager.get_string(StringType.ERROR, "error.no_permission"))
         return
     # no permission
     elif isinstance(error, commands.MissingPermissions):
-        RelevanceLogger.write_log_entry(f"{ctx.author}", f"cmd.{ctx.command} failed (no permission)", type=LogType.INFO)
-        await ctx.send(f"{ConfigManager.get_config('strings')['error']['no_permission']}")
+        RelevanceLogger.write_log_entry(f"cmd.{ctx.command} failed (no permission)", f"{ctx.author}", type=LogType.INFO)
+        await ctx.send(StringManager.get_string(StringType.ERROR, "error.no_permission"))
         return
     # other errors
     else:
-        RelevanceLogger.write_log_entry(f"{ctx.author}", f"cmd.{ctx.command} failed (unknown error: {str(error)})", type=LogType.ERROR)
+        RelevanceLogger.write_log_entry(f"cmd.{ctx.command} failed (unknown error: {str(error)})", f"{ctx.author}", type=LogType.ERROR)
         raise error
     
 # LOAD COGS

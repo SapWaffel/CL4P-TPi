@@ -8,10 +8,17 @@ def write_json(data, file="boot_info.json"):
     with open(file, "w") as f:
         json.dump(data, f, indent=4)
 
-def check_boot_cooldown(difference_seconds=10):
+def check_boot_cooldown(difference_seconds=10, return_remaining=False):
     boot_time = MqttManager.read("boot_time")
+    boot_time = float(boot_time) if boot_time is not None else 0
     current_time = time.time()
-    return (current_time - boot_time) < difference_seconds
+    
+    if return_remaining:
+        remaining = difference_seconds - (current_time - boot_time)
+        return {"can_boot": remaining <= 0, "remaining": max(0, remaining)}
+    else:
+        return (current_time - boot_time) >= difference_seconds
+
 
 def send_boot_signal():
     # GPIO-Pins disabled on non-Raspberry Pi systems
@@ -34,8 +41,9 @@ def send_boot_signal():
     return {"success": True}
 
 def boot(cooldown_seconds=10):
-    if not check_boot_cooldown(cooldown_seconds):
-        return {"success": False, "error": f"{ConfigManager.get_config('strings')['response']['request']['deny']['cooldown']}"}
+    check_boot = check_boot_cooldown(cooldown_seconds, return_remaining=True)
+    if not check_boot["can_boot"]:
+        return {"success": False, "error": f"{ConfigManager.get_config('strings')['response']['request']['deny']['cooldown'].replace('{m}', str(int(check_boot['remaining'] // 60))).replace('{s}', str(int(check_boot['remaining'] % 60)))}"}
 
     try:
         send_boot_signal()

@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from src.config_manager import ConfigManager
+from src.config_manager import ConfigManager, StringManager, StringType
 from src.discord_bot.util.is_admin_on_guild import is_admin_on_guild
 from src.discord_bot.util.refresh_presence import refresh_presence
 from src.discord_bot.logs.rl_log.log_handler import RelevanceLogger, LogType
@@ -14,7 +14,7 @@ class MaintenanceCog(commands.Cog):
     @commands.dm_only()
     async def maintenance(self, ctx):
         if not await is_admin_on_guild(self.bot, ctx.author.id):
-            await ctx.send(ConfigManager.get_config("strings")["error"]["no_permission"])
+            await ctx.send(StringManager.get_string(StringType.ERROR, "error.no_permission"))
             RelevanceLogger.write_log_entry(f"cmd.maintenance - failed (no permission)", ctx.author.id, LogType.INFO)
             return
         
@@ -23,11 +23,11 @@ class MaintenanceCog(commands.Cog):
         try:
             ConfigManager.merge_config('discord_bot', {'maintenance': new_maintenance})
         except Exception as e:
-            await ctx.send(ConfigManager.get_config("strings")["response"]["maintenance"]["error"].replace("{error}", str(e)))
+            await ctx.send(StringManager.get_string(StringType.ERROR, "response.maintenance.error", error=str(e)))
             RelevanceLogger.write_log_entry(f"cmd.maintenance - failed (error: {str(e)})", ctx.author.id, LogType.WARNING)
             return
 
-        await ctx.send(ConfigManager.get_config("strings")["response"]["maintenance"][str(new_maintenance).lower()])
+        await ctx.send(StringManager.get_string(StringType.SUCCESS, "response.maintenance", status=str(new_maintenance).lower()))
         RelevanceLogger.write_log_entry(f"cmd.maintenance - success (set to {new_maintenance})", ctx.author.id, LogType.INFO)
         await refresh_presence(self.bot)
 

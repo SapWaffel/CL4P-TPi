@@ -1,5 +1,5 @@
 from discord.ext import commands
-from src.config_manager import ConfigManager
+from src.config_manager import ConfigManager, StringManager, StringType
 from src.discord_bot.util.is_admin_on_guild import is_admin_on_guild
 from src.discord_bot.util.check_online import check_status
 from src.boot_service import boot_service
@@ -14,23 +14,23 @@ class RebootCog(commands.Cog):
     @commands.dm_only()
     async def reboot(self, ctx):
         if not await is_admin_on_guild(self.bot, ctx.author.id):
-            await ctx.send(ConfigManager.get_config("strings")["error"]["no_permission"])
-            RelevanceLogger.write_log_entry(f"cmd.reboot - failed (no permission)", ctx.author.id, LogType.INFO)
+            await ctx.send(StringManager.get_string(StringType.ERROR, "error.no_permission"))
+            RelevanceLogger.write_log_entry(f"cmd.reboot - failed (no permission)", ctx.author, LogType.INFO)
             return
         
         status = check_status()
         if status == "starting":
-            await ctx.send(ConfigManager.get_config("strings")["response"]["reboot"]["error"].replace("{error}", ConfigManager.get_config("strings")["response"]["request"]["deny"]["already_starting"]))
-            RelevanceLogger.write_log_entry(f"cmd.reboot - failed (already starting)", ctx.author.id, LogType.INFO)
+            await ctx.send(StringManager.get_string(StringType.ERROR, "response.reboot.error").replace("{error}", StringManager.get_string(StringType.ERROR, "response.request.deny.starting")))
+            RelevanceLogger.write_log_entry(f"cmd.reboot - failed (already starting)", ctx.author, LogType.INFO)
             return
-        
+            
         boot_result = boot_service.reboot()
-        if boot_result["status"] == "success":
-            await ctx.send(ConfigManager.get_config("strings")["response"]["reboot"]["success"])
-            RelevanceLogger.write_log_entry(f"cmd.reboot - success", ctx.author.id, LogType.INFO)
+        if boot_result["success"] == True:
+            await ctx.send(StringManager.get_string(StringType.SUCCESS, "response.reboot.success"))
+            RelevanceLogger.write_log_entry(f"cmd.reboot - success", ctx.author, LogType.INFO)
         else:
-            await ctx.send(ConfigManager.get_config("strings")["response"]["reboot"]["error"].replace("{error}", boot_result["error"]))
-            RelevanceLogger.write_log_entry(f"cmd.reboot - failed ({boot_result['error']})", ctx.author.id, LogType.WARNING)
+            await ctx.send(StringManager.get_string(StringType.ERROR, "response.reboot.error").replace("{error}", boot_result["error"]))
+            RelevanceLogger.write_log_entry(f"cmd.reboot - failed ({boot_result['error']})", ctx.author, LogType.WARNING)
 
 async def setup(bot):
     await bot.add_cog(RebootCog(bot))

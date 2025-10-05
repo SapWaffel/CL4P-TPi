@@ -3,50 +3,44 @@ import os
 import time
 from src.config_manager import ConfigManager
 
-global CURRENT
-CURRENT = None
-
 class LogType(Enum):
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
 
 class RelevanceLogger:
+    log_dir = os.path.dirname(os.path.abspath(__file__))
+    latest_log_file = os.path.join(log_dir, "latest.log")
+    final_log_file_name = None
 
     @classmethod
     def create_log_file(cls):
+        # Set the final log file name for later renaming
         current_time = time.strftime("%Y-%m-%d_%H-%M-%S")
-        log_dir = os.path.dirname(os.path.abspath(__file__))
-        log_file_name = f"rl_{current_time}.log"
-        log_file_path = os.path.join(log_dir, log_file_name)
-
-        # Ensure log directory exists
-        os.makedirs(log_dir, exist_ok=True)
-
-        with open(log_file_path, 'w') as log_file:
+        cls.final_log_file_name = f"rl_{current_time}.log"
+        os.makedirs(cls.log_dir, exist_ok=True)
+        # Create/clear latest.log
+        with open(cls.latest_log_file, 'w') as log_file:
             pass
-
-        global CURRENT
-        CURRENT = log_file_name
-
-        # if more than max_log_files, delete the oldest one
-        max_log_files = ConfigManager.get_config('discord_bot')["max_log_files"]
-        log_files = [f for f in os.listdir(log_dir) if f.startswith("rl_") and f.endswith(".log")]
+        # Delete old log files if more than max_log_files exist
+        max_log_files = ConfigManager.get_config("discord_bot")["max_log_files"]
+        log_files = [f for f in os.listdir(cls.log_dir) if f.startswith("rl_") and f.endswith(".log")]
         log_files.sort()
-        if len(log_files) > max_log_files:
-            oldest_file = log_files[0]
-            oldest_file_path = os.path.join(log_dir, oldest_file)
-            os.remove(oldest_file_path)
-
-        return log_file_path
+        while len(log_files) >= max_log_files:
+            os.remove(os.path.join(cls.log_dir, log_files.pop(0)))
 
     @classmethod
     def write_log_entry(cls, msg, user_id, type=LogType.INFO):
-        if CURRENT is None:
+        if not os.path.exists(cls.latest_log_file):
             cls.create_log_file()
-        log_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), CURRENT)
-
         entry = f"[{time.strftime('%Y-%m-%d %H:%M:%S')} | {type.value.upper()} | {user_id}] {msg}\n"
-
-        with open(log_file_path, 'a') as log_file:
+        with open(cls.latest_log_file, 'a') as log_file:
             log_file.write(entry)
+
+    @classmethod
+    def finalize_log_file(cls):
+        # Rename latest.log to the final log file name
+        if cls.final_log_file_name and os.path.exists(cls.latest_log_file):
+            final_path = os.path.join(cls.log_dir, cls.final_log_file_name)
+            os.rename(cls.latest_log_file, final_path)
+

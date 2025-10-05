@@ -1,10 +1,18 @@
 {
+    "message_types": {
+        "success": "✅ ",
+        "error": "🟥 ",
+        "info": "ℹ️ ",
+        "warning": "⚠️ ",
+        "processing": "⏳ ",
+        "appendix": ""
+    },
     "error": {
         "no_permission": "Du hast keine Berechtigung, diesen Befehl zu verwenden.",
         "unknown_command": "Unbekannter Befehl. Verwende `{prefix}help`, um eine Liste der verfügbaren Befehle zu erhalten.",
         "wrong_channel": "Bitte verwende #{channel} für Bot-Befehle.",
         "private_message_only": "Dieser Befehl kann nur in privaten Nachrichten verwendet werden.",
-        "maintenance": "⚠️ Der Bot befindet sich im Wartungsmodus. Bitte versuche es später erneut."
+        "maintenance": "Der Bot befindet sich im Wartungsmodus. Bitte versuche es später erneut."
     },
     "response": {
         "status": "CL4P-TP ist {status}!",
@@ -13,7 +21,7 @@
             "deny": {
                 "generic": "Deine Anfrage wurde abgelehnt ({reason}).",
                 "starting": "Already booting...",
-                "cooldown": "Boot-Cooldown",
+                "cooldown": "Boot-Cooldown ({m}:{s} remaining)",
                 "boot_state": "Already in this state"
             }
         },
@@ -25,7 +33,10 @@
             "success": "CL4P-TP wird neu gestartet!",
             "error": "Fehler beim Neustarten von CL4P-TP: {error}"
         },
-        "reload": "Bot wird neu gestartet...",
+        "reload": {
+            "start": "Bot wird neu gestartet...",
+            "success": "Der Bot wurde erfolgreich neu gestartet!"
+        },
         "maintenance": {
             "true": "Wartungsmodus aktiviert. Der Bot ist jetzt für alle Benutzer außer Administratoren nicht verfügbar.",
             "false": "Wartungsmodus deaktiviert. Der Bot ist jetzt für alle Benutzer verfügbar.",
