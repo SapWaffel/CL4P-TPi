@@ -3,7 +3,7 @@ import discord
 from src.config_manager import ConfigManager, StringManager, StringType
 from src.discord_bot.logs.rl_log.log_handler import RelevanceLogger, LogType
 
-async def respond_after_reboot(bot, user):
+async def respond_after_reload(bot, user):
     if user is None:
         return
     
@@ -15,4 +15,4 @@ async def respond_after_reboot(bot, user):
     RelevanceLogger.write_log_entry(f"respond_after_reboot - sent confirmation to user {user}", "SYSTEM", LogType.INFO)
 
     # reset config
-    ConfigManager.merge_config(module="discord_bot", new_data={"restart_response": {"waiting_for_response": False,"user": None}})
+    ConfigManager.merge_config(module="discord_bot", new_data={"reload_response": {"waiting_for_response": False,"user": None}})
