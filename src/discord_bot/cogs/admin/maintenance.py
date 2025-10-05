@@ -27,9 +27,10 @@ class MaintenanceCog(commands.Cog):
             RelevanceLogger.write_log_entry(f"cmd.maintenance - failed (error: {str(e)})", ctx.author.id, LogType.WARNING)
             return
 
-        await ctx.send(StringManager.get_string(StringType.SUCCESS, "response.maintenance", status=str(new_maintenance).lower()))
+        await ctx.send(StringManager.get_string(StringType.SUCCESS, f"response.maintenance.{str(new_maintenance).lower()}"))
         RelevanceLogger.write_log_entry(f"cmd.maintenance - success (set to {new_maintenance})", ctx.author.id, LogType.INFO)
         await refresh_presence(self.bot)
 
 async def setup(bot):
+
     await bot.add_cog(MaintenanceCog(bot))
