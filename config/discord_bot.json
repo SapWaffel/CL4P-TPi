@@ -33,8 +33,9 @@
         "This glacier\u2019s run by a bandit named Captain Flynt. The jerk kept me as his torture plaything for a few months. We played games like \"dodge the blowtorch\", and \"don\u2019t get dunked into the pool of acid\". I was really good at the first one.",
         "What have you DONE?! These were human beings with lives and families and-- I\u2019m totally kidding, SCREW those guys!"
     ],
-    "relead_response": {
+    "reload_response": {
         "waiting_for_response": false,
         "user": null
     }
+
 }
