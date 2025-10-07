@@ -10,19 +10,30 @@
     "error": {
         "no_permission": "Du hast keine Berechtigung, diesen Befehl zu verwenden.",
         "unknown_command": "Unbekannter Befehl. Verwende `{prefix}help`, um eine Liste der verfügbaren Befehle zu erhalten.",
-        "wrong_channel": "Bitte verwende #{channel} für Bot-Befehle.",
+        "wrong_channel": "{user} - Nuh uh {channel}",
         "private_message_only": "Dieser Befehl kann nur in privaten Nachrichten verwendet werden.",
         "maintenance": "Der Bot befindet sich im Wartungsmodus. Bitte versuche es später erneut."
     },
     "response": {
         "status": "CL4P-TP ist {status}!",
         "request": {
-            "success": "Deine Anfrage wurde akzeptiert!",
+            "success": {
+                "generic": "Deine Anfrage wurde akzeptiert! {action}",
+                "start": "CL4P-TP wird gestartet...",
+                "stop": "CL4P-TP wird heruntergefahren..."
+            },
             "deny": {
-                "generic": "Deine Anfrage wurde abgelehnt ({reason}).",
-                "starting": "Already booting...",
-                "cooldown": "Boot-Cooldown ({m}:{s} remaining)",
-                "boot_state": "Already in this state"
+                "generic": "Deine Anfrage wurde abgelehnt ({reason})",
+                "reasons": {
+                    "working_hours": "Außerhalb der Freigabezeiten",
+                    "no_allowance": "Freigabe verweigert",
+                    "starting": "Already booting...",
+                    "cooldown": "Boot-Cooldown ({m}:{s} remaining)",
+                    "boot_state": "Already in this state"
+                },
+                "no_args": "No arguments provided. Use `!request start` or `!request stop`",
+                "invalid_arg": "Invalid argument. Use `!request start` or `!request stop`",
+                "invalid": "Invalid request. CL4P-TP is already {state}."
             }
         },
         "boot": {

@@ -1,9 +1,9 @@
 {
     "maintenance": true,
     "prefix": "!",
-    "token": "YOUR_DISCORD_BOT_TOKEN",
+    "token": "YOUR_BOT_TOKEN",
     "guild_id": "YOUR_GUILD_ID",
-    "commands_channel_name": "botcmds",
+    "commands_channel_id": "YOUR_CHANNEL_ID",
     "max_log_files": 3,
     "description": [
         "NOOOOO! DAMN YOU, STAIRS! Dammit, Jack -- how did you know stairs were my ONLY weakness?! Next to electrocution, and explosions, and gunfire, rust, corrosion, being kicked a lot, viruses, being called bad names, falling from great heights, drowning, adult onset diabetes, being looked at funny, heart attacks, exposure to oxygen, being turned down by women, and pet allergens!",

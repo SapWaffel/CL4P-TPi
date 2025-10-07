@@ -27,11 +27,10 @@ class StringManager:
 
     @classmethod
     # Example usage: StringManager.get_string(StringType.SUCCESS, "response.reload.start")
-    def get_string(cls, msg_type ,key, **kwargs):
-        # Nested key access
+    def get_string(cls, msg_type, key, **kwargs):
         keys = key.split('.')
-        string = cls._strings.get(msg_type.value, cls._strings)
-        for i, k in enumerate(keys):
+        string = cls._strings
+        for k in keys:
             if isinstance(string, dict):
                 string = string.get(k, f'Key "{key}" not found in strings.json')
             else:

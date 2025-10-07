@@ -73,49 +73,41 @@ async def on_ready():
         
 @bot.event
 async def on_message(message):
-    # ignore bot messages
+    # Ignore messages from bots
     if message.author.bot:
         return
-    # wrong channel
-    cmd_channel_name = config["commands_channel_name"]
-    if isinstance(message.channel, discord.TextChannel) and message.channel.name != cmd_channel_name:
+
+    # Ignore non-commands
+    if not message.content.startswith(PREFIX):
+        return
+
+    # Check for correct channel
+    allowed_channel_id = ConfigManager.get_config('discord_bot')["commands_channel_id"]
+    if (message.guild and message.channel.id != allowed_channel_id):
         await message.delete()
-        await message.channel.send(StringManager.get_string(StringType.INFO, "error.wrong_channel", channel=cmd_channel_name), delete_after=10)
+        await message.channel.send(StringManager.get_string(StringType.WARNING, "error.wrong_channel", channel=f"<#{allowed_channel_id}>", user=message.author.mention), delete_after=10)
+        return
 
+    # If dm, check admin, else no permission
+    if message.guild is None and not await is_admin_on_guild(bot, message.author.id):
+        await message.channel.send(StringManager.get_string(StringType.ERROR, "error.no_permission"))
         return
-   # maintenance mode (ignore admins, ignore help command)
-    if MAINTENANCE and not await is_admin_on_guild(bot, message.author.id) and not message.content.startswith(f"{PREFIX}help"):
-        await message.channel.send(StringManager.get_string(StringType.WARNING, "error.maintenance"))
-        RelevanceLogger.write_log_entry(f"{message.author}", "attempt to use bot refused (maintenance)", type=LogType.WARNING)
+
+    # Maintenance 
+    if MAINTENANCE and not message.content.startswith(f"{PREFIX}help"):
+        if not await is_admin_on_guild(bot, message.author.id):
+            await message.channel.send(StringManager.get_string(StringType.WARNING, "error.maintenance"))
+            return
+
+    # Unknown command
+    if not any(message.content.startswith(f"{PREFIX}{cmd.name}") for cmd in bot.commands):
+        await message.channel.send(StringManager.get_string(StringType.ERROR, "error.unknown_command", prefix=PREFIX))
         return
-    # process commands
+
+    # Check for command
     await bot.process_commands(message)
-
-@bot.event
-async def on_command_error(ctx, error):
-    # unknown command
-    if isinstance(error, commands.CommandNotFound):
-        await ctx.send(StringManager.get_string(StringType.ERROR, "error.unknown_command", prefix=PREFIX))
-        RelevanceLogger.write_log_entry(f"cmd.{ctx.command} failed (unknown command)", f"{ctx.author}", type=LogType.INFO)
-        return
-    # only in pms
-    elif isinstance(error, commands.PrivateMessageOnly):
-        RelevanceLogger.write_log_entry(f"cmd.{ctx.command} failed (private message only)", f"{ctx.author}", type=LogType.INFO)
-        if is_admin_on_guild(bot, ctx.author.id):
-            await ctx.send(StringManager.get_string(StringType.ERROR, "error.private_message_only"))
-        else:
-            await ctx.send(StringManager.get_string(StringType.ERROR, "error.no_permission"))
-        return
-    # no permission
-    elif isinstance(error, commands.MissingPermissions):
-        RelevanceLogger.write_log_entry(f"cmd.{ctx.command} failed (no permission)", f"{ctx.author}", type=LogType.INFO)
-        await ctx.send(StringManager.get_string(StringType.ERROR, "error.no_permission"))
-        return
-    # other errors
-    else:
-        RelevanceLogger.write_log_entry(f"cmd.{ctx.command} failed (unknown error: {str(error)})", f"{ctx.author}", type=LogType.ERROR)
-        raise error
     
+
 # LOAD COGS
 async def load_cogs():
     base_package = "src.discord_bot.cogs"
@@ -125,7 +117,7 @@ async def load_cogs():
             if filename.endswith('.py') and not filename.startswith('__'):
                 try:
                     rel_path = os.path.relpath(os.path.join(root, filename), base_dir)
-                    module_path = rel_path.replace(os.sep, '.')[:-3]  # remove .py
+                    module_path = rel_path.replace(os.sep, '.')[:-3]
                     cog_path = f"{base_package}.{module_path}"
                     await bot.load_extension(cog_path)
                     RelevanceLogger.write_log_entry(f"Loaded cog: {filename}", "SYSTEM")

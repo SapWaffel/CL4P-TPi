@@ -1,0 +1,27 @@
+{
+    "version": "SNAPSHOT-1.0.3",
+    "boot_cooldown_seconds": 300,
+    "boot_restrictions": {
+        "enabled": false,
+        "always_allow": {
+            "start": false,
+            "stop": false
+        },
+        "single_shot": {
+            "start": false,
+            "stop": false
+        },
+        "working_hours": [
+            {
+                "days": [1, 2, 3, 4, 5],
+                "start": "08:00",
+                "end": "18:00"
+            },
+            {
+                "days": [6],
+                "start": "10:00",
+                "end": "16:00"
+            }
+        ]
+    }
+}

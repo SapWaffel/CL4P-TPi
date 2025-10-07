@@ -1,4 +1,4 @@
-#import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 import time
 import json
 from src.mqtt import MqttManager
@@ -21,8 +21,6 @@ def check_boot_cooldown(difference_seconds=10, return_remaining=False):
 
 
 def send_boot_signal():
-    # GPIO-Pins disabled on non-Raspberry Pi systems
-    return {"success": True, "error": "GPIO disabled for testing purposes."}
     # Set GPIO-Modus (BCM)
     GPIO.setmode(GPIO.BCM)
     RELAY_PINS = [7, 3, 22, 25]

@@ -14,7 +14,7 @@ async def refresh_presence(bot):
 
     if MAINTENANCE:
         RelevanceLogger.write_log_entry("Bot is in maintenance mode", "SYSTEM", type=LogType.WARNING)
-        await bot.change_presence(activity=None, status=discord.Status.do_not_disturb)
+        await bot.change_presence(activity=discord.CustomActivity(name="Maintenance"), status=discord.Status.do_not_disturb)
     else:
         print("Bot is online and operational")
         await bot.change_presence(activity=discord.Game(name="Borderlands 3"), status=discord.Status.online)
