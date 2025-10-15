@@ -1,3 +1,4 @@
 discord.py
 RPi.GPIO
 paho-mqtt
+requests

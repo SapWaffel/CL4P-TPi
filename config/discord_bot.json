@@ -1,5 +1,5 @@
 {
-    "maintenance": true,
+    "maintenance": false,
     "token": "YOUR_BOT_TOKEN",
     "guild_id": "YOUR_GUILD_ID",
     "max_log_files": 3,
