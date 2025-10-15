@@ -8,14 +8,16 @@
         "appendix": ""
     },
     "error": {
+        "generic": "Etwas ist schief gelaufen. Bitte kontaktiere einen Administrator.",
         "no_permission": "Du hast keine Berechtigung, diesen Befehl zu verwenden.",
         "unknown_command": "Unbekannter Befehl. Verwende `{prefix}help`, um eine Liste der verfügbaren Befehle zu erhalten.",
         "wrong_channel": "{user} - Nuh uh {channel}",
         "private_message_only": "Dieser Befehl kann nur in privaten Nachrichten verwendet werden.",
-        "maintenance": "Der Bot befindet sich im Wartungsmodus. Bitte versuche es später erneut."
+        "maintenance": "Der Bot befindet sich im Wartungsmodus. Bitte versuche es später erneut.",
+        "non_slash_prefix": "{user} Der command-prefix hat sich geändert. Verwende bitte \"/\"."
     },
     "response": {
-        "status": "CL4P-TP ist {status}!",
+        "status": "CL4P-TP ist **{status}**!",
         "request": {
             "success": {
                 "generic": "Deine Anfrage wurde akzeptiert! {action}",
@@ -26,10 +28,11 @@
                 "generic": "Deine Anfrage wurde abgelehnt ({reason})",
                 "reasons": {
                     "working_hours": "Außerhalb der Freigabezeiten",
+                    "no_workday": "Heute ist keine Freigabe erteilt",
                     "no_allowance": "Freigabe verweigert",
                     "starting": "Already booting...",
                     "cooldown": "Boot-Cooldown ({m}:{s} remaining)",
-                    "boot_state": "Already in this state"
+                    "boot_state": "Already {state}"
                 },
                 "no_args": "No arguments provided. Use `!request start` or `!request stop`",
                 "invalid_arg": "Invalid argument. Use `!request start` or `!request stop`",
@@ -46,7 +49,8 @@
         },
         "reload": {
             "start": "Bot wird neu gestartet...",
-            "success": "Der Bot wurde erfolgreich neu gestartet!"
+            "success": "{user}Der Bot wurde erfolgreich neu gestartet!",
+            "partial_success": "{user}Der Bot wurde neu gestartet, aber es gab ein Problem: {error}"
         },
         "maintenance": {
             "true": "Wartungsmodus aktiviert. Der Bot ist jetzt für alle Benutzer außer Administratoren nicht verfügbar.",

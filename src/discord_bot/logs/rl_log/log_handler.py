@@ -15,15 +15,12 @@ class RelevanceLogger:
 
     @classmethod
     def create_log_file(cls):
-        # Set the final log file name for later renaming
-        current_time = time.strftime("%Y-%m-%d_%H-%M-%S")
-        cls.final_log_file_name = f"rl_{current_time}.log"
         os.makedirs(cls.log_dir, exist_ok=True)
         # Create/clear latest.log
         with open(cls.latest_log_file, 'w') as log_file:
             pass
         # Delete old log files if more than max_log_files exist
-        max_log_files = ConfigManager.get_config("discord_bot")["max_log_files"]
+        max_log_files = ConfigManager.get_config("discord_bot")["max_log_files"] + 1 # +1 for latest.log
         log_files = [f for f in os.listdir(cls.log_dir) if f.startswith("rl_") and f.endswith(".log")]
         log_files.sort()
         while len(log_files) >= max_log_files:
@@ -40,7 +37,9 @@ class RelevanceLogger:
     @classmethod
     def finalize_log_file(cls):
         # Rename latest.log to the final log file name
-        if cls.final_log_file_name and os.path.exists(cls.latest_log_file):
-            final_path = os.path.join(cls.log_dir, cls.final_log_file_name)
+        current_time = time.strftime("%Y-%m-%d_%H-%M-%S")
+        final_log_file_name = f"rl_{current_time}.log"
+        if final_log_file_name and os.path.exists(cls.latest_log_file):
+            final_path = os.path.join(cls.log_dir, final_log_file_name)
             os.rename(cls.latest_log_file, final_path)
 

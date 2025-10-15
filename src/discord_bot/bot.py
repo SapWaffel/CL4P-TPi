@@ -1,129 +1,104 @@
-# src/discord_bot/bot.py
-import time
-import logging
-import os
-from xml.sax import handler
+# GitHub Updater
+import src.discord_bot.util.GitUpdater
 
+# Discord Bot
+import os, random
 import discord
 from discord.ext import commands
-import asyncio
 
 from src.config_manager import ConfigManager, StringManager, StringType
 from src.discord_bot.logs.rl_log.log_handler import RelevanceLogger, LogType
-from src.discord_bot.util.refresh_presence import refresh_presence
-from src.discord_bot.util.is_admin_on_guild import is_admin_on_guild
-
-from src.discord_bot.util.custom_help_command import CustomHelpCommand
 from src.discord_bot.util.respond_after_reload import respond_after_reload
 
 # CONFIG
 config = ConfigManager.get_config('discord_bot')
 TOKEN = config["token"]
-PREFIX = config["prefix"]
 MAINTENANCE = config["maintenance"]
+GUILD_ID = discord.Object(id=config["guild_id"])
 
-# RELEVANCE LOGGING
-RelevanceLogger.create_log_file()
-RelevanceLogger.write_log_entry("Bot is starting...", "SYSTEM")
+class Bot(commands.Bot):
+    async def on_ready(self):
+        RelevanceLogger.write_log_entry(f"Bot is ready as {self.user} (ID: {self.user.id}).", "SYSTEM", LogType.INFO)
+        if MAINTENANCE: RelevanceLogger.write_log_entry("Bot is in maintenance mode", "SYSTEM", type=LogType.WARNING)
+        await self.update_presence()
 
-# DISCORD NATIVE LOGGING
-discord_log_dir = 'src/discord_bot/logs/discord_log'
-os.makedirs(discord_log_dir, exist_ok=True)  # Verzeichnis anlegen, falls nicht vorhanden
+        await setup(self)
 
-discord_log_file_name = f'discord_{time.strftime("%Y-%m-%d_%H-%M-%S")}'
+        # Sync commands to guild
+        try:
+            synced = await self.tree.sync(guild=GUILD_ID)
+            RelevanceLogger.write_log_entry(f"Synced {len(synced)} command(s) to the guild {GUILD_ID.id}.", "SYSTEM", LogType.INFO)
+        except Exception as e:
+            RelevanceLogger.write_log_entry(f"Failed to sync commands to guild {GUILD_ID.id}: {e}", "SYSTEM", LogType.ERROR)
 
-discord_log_handler = logging.FileHandler(
-    filename=f'{discord_log_dir}/{discord_log_file_name}.log',
-    encoding='utf-8',
-    mode='w'
-)
+        # Respond after reload
+        response_data = ConfigManager.get_config('discord_bot')['reload_response']
+        if response_data["waiting_for_response"] and response_data["channel"] is not None:
+            await respond_after_reload(bot, response_data)
 
-# remove old log files
-max_log_files = config["max_log_files"]
-log_files = sorted([f for f in os.listdir(discord_log_dir) if f.startswith('discord_') and f.endswith('.log')])
-if len(log_files) > max_log_files:
-    for old_file in log_files[:-max_log_files]:
-        os.remove(os.path.join(discord_log_dir, old_file))
+    async def update_presence(self):
+        if MAINTENANCE:
+            await self.change_presence(activity=discord.CustomActivity(name="Maintenance"), status=discord.Status.do_not_disturb)
+        else:
+            quotes = ConfigManager.get_config('discord_bot')['quotes']
+            await self.application.edit(description=random.choice(quotes))
+            await self.change_presence(activity=discord.Game(name="Borderlands 3"), status=discord.Status.online)
 
-# BOT INTENTS
-intents = discord.Intents.default()
-intents.message_content = True
-intents.members = True
+    async def close(self):
+        RelevanceLogger.write_log_entry("Bot is shutting down...", "SYSTEM", LogType.INFO)
+        RelevanceLogger.write_log_entry("Goodbye!", "SYSTEM", LogType.INFO)
+        RelevanceLogger.finalize_log_file()
+        await super().close()
 
-# BOT SETUP
-bot = commands.Bot(command_prefix=PREFIX, intents=intents, help_command=CustomHelpCommand())
-
-@bot.event
-async def on_ready():
-    logging.basicConfig(level=logging.INFO, handlers=[discord_log_handler])
-    logging.info(f'Logged in as {bot.user.name} (ID: {bot.user.id})')
-    RelevanceLogger.write_log_entry(f"Bot is ready as {bot.user.name} (ID: {bot.user.id})", "SYSTEM")
-
-    if MAINTENANCE:
-        await bot.application.edit(description="Currently in maintenance mode.")
-    RelevanceLogger.write_log_entry("Bot is online and operational", "SYSTEM")
-
-    # Presence
-    await refresh_presence(bot)
-
-    # Check for reload response
-    reload_response = ConfigManager.get_config('discord_bot')["reload_response"]
-    if reload_response["waiting_for_response"] and reload_response["user"] is not None:
-        await respond_after_reload(bot, reload_response["user"])
-        
-@bot.event
-async def on_message(message):
-    # Ignore messages from bots
-    if message.author.bot:
-        return
-
-    # Ignore non-commands
-    if not message.content.startswith(PREFIX):
-        return
-
-    # Check for correct channel
-    allowed_channel_id = ConfigManager.get_config('discord_bot')["commands_channel_id"]
-    if (message.guild and message.channel.id != allowed_channel_id):
-        await message.delete()
-        await message.channel.send(StringManager.get_string(StringType.WARNING, "error.wrong_channel", channel=f"<#{allowed_channel_id}>", user=message.author.mention), delete_after=10)
-        return
-
-    # If dm, check admin, else no permission
-    if message.guild is None and not await is_admin_on_guild(bot, message.author.id):
-        await message.channel.send(StringManager.get_string(StringType.ERROR, "error.no_permission"))
-        return
-
-    # Maintenance 
-    if MAINTENANCE and not message.content.startswith(f"{PREFIX}help"):
-        if not await is_admin_on_guild(bot, message.author.id):
-            await message.channel.send(StringManager.get_string(StringType.WARNING, "error.maintenance"))
+    async def on_message(self, message):
+        if message.author == self.user:
             return
 
-    # Unknown command
-    if not any(message.content.startswith(f"{PREFIX}{cmd.name}") for cmd in bot.commands):
-        await message.channel.send(StringManager.get_string(StringType.ERROR, "error.unknown_command", prefix=PREFIX))
-        return
+        if config['watch_for_steve'] and message.content.strip() == "Hey-ooo":
+            await message.reply("**SHUT THE FUCK UP, STEVE!**")
 
-    # Check for command
-    await bot.process_commands(message)
-    
+        if message.content.startswith("!"):
+            await message.channel.send(StringManager.get_string(StringType.ERROR, "error.non_slash_prefix", user=message.author.mention))
+            await message.delete()
+            return
+        
+        await self.process_commands(message)
 
-# LOAD COGS
-async def load_cogs():
-    base_package = "src.discord_bot.cogs"
-    base_dir = os.path.join(os.path.dirname(__file__), "cogs")
-    for root, dirs, files in os.walk(base_dir):
-        for filename in files:
-            if filename.endswith('.py') and not filename.startswith('__'):
+intents = discord.Intents.default()
+intents.message_content = True
+bot = Bot(command_prefix="!", intents=intents)
+bot.GUILD_ID = GUILD_ID
+
+async def setup(bot):
+    cogs_dir = os.path.join(os.path.dirname(__file__), "cogs")
+    for root, dirs, files in os.walk(cogs_dir):
+        for file in files:
+            if file.endswith(".py") and not file.startswith("__"):
+                rel_path = os.path.relpath(os.path.join(root, file), os.path.dirname(__file__))
+                module = rel_path.replace(os.sep, ".")[:-3]  # .py entfernen
+                module = f"src.discord_bot.{module}"
                 try:
-                    rel_path = os.path.relpath(os.path.join(root, filename), base_dir)
-                    module_path = rel_path.replace(os.sep, '.')[:-3]
-                    cog_path = f"{base_package}.{module_path}"
-                    await bot.load_extension(cog_path)
-                    RelevanceLogger.write_log_entry(f"Loaded cog: {filename}", "SYSTEM")
+                    await bot.load_extension(module)
+                    RelevanceLogger.write_log_entry(f"Loaded extension: {module}", "SYSTEM", LogType.INFO)
                 except Exception as e:
-                    RelevanceLogger.write_log_entry(f"Failed to load cog: {filename} ({str(e)})", "SYSTEM", type=LogType.ERROR)
+                    RelevanceLogger.write_log_entry(f"Failed to load extension {module}: {e}", "SYSTEM", LogType.ERROR)
+        
+
+async def maintenance_check(interaction: discord.Interaction) -> bool:
+    if MAINTENANCE:
+        if interaction.user.guild_permissions.administrator:
+            return True
+        await interaction.response.send_message(
+            StringManager.get_string(StringType.ERROR, "maintenance"),
+            ephemeral=True
+        )
+        return False
+    return True
+
+bot.tree.interaction_check = maintenance_check
 
 if __name__ == '__main__':
-    asyncio.run(load_cogs())
-    bot.run(TOKEN, log_handler=discord_log_handler, log_level=logging.DEBUG)
+    if ConfigManager.get_config('_global')['auto_update']:
+        src.discord_bot.util.GitUpdater.check_for_updates()
+
+    bot.run(TOKEN)

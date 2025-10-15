@@ -1,5 +1,6 @@
 {
-    "version": "SNAPSHOT-1.0.3",
+    "version": "SNAPSHOT-1.1.0",
+    "auto_update": true,
     "boot_cooldown_seconds": 300,
     "boot_restrictions": {
         "enabled": false,

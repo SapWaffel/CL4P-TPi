@@ -7,19 +7,19 @@ class MqttManager:
     _cache = {}
     _client = None
     _lock = threading.Lock()
-    _topic_prefix = "item/server/minecraft.tplr.eu/"
+    _topic_prefix = ConfigManager.get_config(module='mqtt')['topic_prefix']
 
     @classmethod
     def connect(cls):
         if cls._client is not None:
             return
         config = ConfigManager.get_config(module='mqtt')
-        RelevanceLogger.write_log_entry(config, "SYSTEM", LogType.INFO)
+        print(config)
         cls._client = mqtt.Client()
         cls.context = ssl.create_default_context()
         cls.context.check_hostname = False
         cls.context.verify_mode = ssl.CERT_NONE
-        cls._client.tls_set_context(cls.context)  # <--- Das fehlt!
+        cls._client.tls_set_context(cls.context)
         cls._client.username_pw_set(config['user'], config['password'])
         cls._client.on_message = cls._on_message
         cls._client.connect(config['broker'], config['port'])
@@ -34,6 +34,10 @@ class MqttManager:
 
     @classmethod
     def read(cls, subject):
+        ## DEBUG
+        time.sleep(2)
+        return "online"
+        ##
         cls.connect()
         time.sleep(0.1)
         full_topic = cls._topic_prefix + subject
