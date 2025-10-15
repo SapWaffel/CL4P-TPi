@@ -34,10 +34,6 @@ class MqttManager:
 
     @classmethod
     def read(cls, subject):
-        ## DEBUG
-        time.sleep(2)
-        return "online"
-        ##
         cls.connect()
         time.sleep(0.1)
         full_topic = cls._topic_prefix + subject
