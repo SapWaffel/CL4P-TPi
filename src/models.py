@@ -51,3 +51,9 @@ class BootRequest(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.now)
     host_type: Optional[str] = "hardware"
     host_name: Optional[str] = "claptp"
+
+class HostBootStatus(BaseModel):
+    host_type: str
+    host_name: str
+    status: str
+    last_update: datetime = Field(default_factory=lambda: datetime.now())

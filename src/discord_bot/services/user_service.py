@@ -1,5 +1,5 @@
 import logging 
-from datetime import datetime, timezone
+from datetime import datetime
 from src.db.mongo_client import get_mongo_client
 
 logger = logging.getLogger(__name__)
