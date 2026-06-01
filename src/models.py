@@ -3,12 +3,10 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from enum import Enum
 
-
 class RightsLevel(int, Enum):
     BASIC = 1
     POWER = 2
     ADMIN = 3
-
 
 class User(BaseModel):
     discord_id: int
@@ -23,12 +21,10 @@ class User(BaseModel):
     class Config:
         use_enum_values = True
 
-
 class BootRestrictionType(str, Enum):
     ALWAYS_ALLOW = "always_allow"
     SINGLE_SHOT = "single_shot"
     WORKING_HOURS = "working_hours"
-
 
 class BootRestriction(BaseModel):
     type: BootRestrictionType
@@ -37,12 +33,10 @@ class BootRestriction(BaseModel):
     created_date: datetime = Field(default_factory=datetime.now)
     last_modified: datetime = Field(default_factory=datetime.now)
 
-
 class BootRequestStatus(str, Enum):
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
-
 
 class BootRequest(BaseModel):
     user_id: int

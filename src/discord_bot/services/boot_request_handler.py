@@ -60,7 +60,6 @@ class BootRequestHandler:
                     "$set": {
                         "boot.request.requested": True,
                         "boot.request.action": action,
-                        "boot.request.user_id": user_id,
                         "boot.request.timestamp": datetime.now(),
                     }
                 },

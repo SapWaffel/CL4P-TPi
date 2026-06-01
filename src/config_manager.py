@@ -20,7 +20,6 @@ class ConfigManager:
         self._load_config()
     
     def _load_config(self) -> None:
-        """Lädt config.json"""
         try:
             with open(self.config_path, 'r', encoding='utf-8') as f:
                 ConfigManager._config = json.load(f)
@@ -45,7 +44,6 @@ class ConfigManager:
     
     @staticmethod
     def reload() -> None:
-        """Reloaded config.json"""
         ConfigManager._config = None
         manager = ConfigManager()
         manager._load_config()

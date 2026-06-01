@@ -3,7 +3,22 @@
     "auto_update": true,
     "mongodb": {
         "uri": "mongodb://192.168.211.181:27017/",
-        "database": "discord"
+        "databases": [
+            {
+                "name": "discord",
+                "collections": [
+                    {"name": "user", "indexes": [{"fields": "discord_id", "unique": true}]},
+                    {"name": "boot_restriction","indexes": [{"fields": "type", "unique": false}]}
+                ]
+            },
+            {
+                "name": "host",
+                "collections": [
+                    {"name": "hardware", "indexes": [{"fields": "hostname", "unique": true}]},
+                    {"name": "vm", "indexes": [{"fields": "hostname", "unique": true}]}
+                ]
+            }
+        ]
     },
     "discord": {
         "token": "YOUR_BOT_TOKEN",
