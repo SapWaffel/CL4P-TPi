@@ -59,10 +59,5 @@
             "What have you DONE?! These were human beings with lives and families and-- I\u2019m totally kidding, SCREW those guys!"
         ]
     },
-    "boot_cooldown_seconds": 300,
-    "maintenance": false,
-    "max_log_files": 3
-    
-    
-    
+    "maintenance": false
 }

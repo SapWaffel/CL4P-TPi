@@ -2,6 +2,7 @@
 import logging
 import subprocess
 import time
+import os
 from pathlib import Path
 from src.db.mongo_client import get_mongo_client
 
@@ -78,7 +79,17 @@ class BootManager:
             
             logger.info(f"Executing script: {script_path} for action: {action}")
 
-            result = subprocess.run(["python", str(script_path)], capture_output=True, text=True, timeout=30)
+            env = os.environ.copy()
+            project_root = Path(__file__).parent.parent.parent
+            env["PYTHONPATH"] = str(project_root)
+
+            result = subprocess.run(
+                ["python", str(script_path)], 
+                capture_output=True, 
+                text=True, 
+                timeout=30,
+                env=env
+            )
 
             if result.returncode == 0:
                 logger.info("Script executed successfully")
