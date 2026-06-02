@@ -1,4 +1,4 @@
 discord.py
+pymongo
+pydantic
 RPi.GPIO
-paho-mqtt
-requests

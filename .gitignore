@@ -21,6 +21,7 @@ wheels/
 *.egg
 
 # Virtual environments
+.venv/
 venv/
 ENV/
 env/
@@ -35,3 +36,4 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+config/config.json

@@ -25,17 +25,12 @@
                 "stop": "CL4P-TP wird heruntergefahren..."
             },
             "deny": {
-                "generic": "Deine Anfrage wurde abgelehnt ({reason})",
+                "generic": "Deine Anfrage wurde abgelehnt.",
                 "reasons": {
-                    "working_hours": "Außerhalb der Freigabezeiten",
-                    "no_workday": "Heute ist keine Freigabe erteilt",
-                    "no_allowance": "Freigabe verweigert",
-                    "starting": "Already booting...",
                     "cooldown": "Boot-Cooldown ({m}:{s} remaining)",
-                    "boot_state": "Already {state}"
+                    "boot_state": "Already {state}",
+                    "starting": "Already booting..."
                 },
-                "no_args": "No arguments provided. Use `!request start` or `!request stop`",
-                "invalid_arg": "Invalid argument. Use `!request start` or `!request stop`",
                 "invalid": "Invalid request. CL4P-TP is already {state}."
             }
         },
@@ -56,10 +51,6 @@
             "true": "Wartungsmodus aktiviert. Der Bot ist jetzt für alle Benutzer außer Administratoren nicht verfügbar.",
             "false": "Wartungsmodus deaktiviert. Der Bot ist jetzt für alle Benutzer verfügbar.",
             "error": "Fehler beim Ändern des Wartungsmodus: {error}"
-        },
-        "print_log": {
-            "no_files": "Es sind keine Log-Dateien vorhanden.",
-            "error": "Fehler beim Abrufen der Log-Dateien: {error}"
         }
     }
 }
