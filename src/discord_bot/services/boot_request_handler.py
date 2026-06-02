@@ -45,10 +45,9 @@ class BootRequestHandler:
                     return restriction_result
 
             # 3) Check cooldown
-            if self.rights_level != RightsLevel.ADMIN:
-                cooldown_result = self.check_cooldown(user_id, action)
-                if not cooldown_result["success"]:
-                    return cooldown_result
+            cooldown_result = self.check_cooldown(user_id, action)
+            if not cooldown_result["success"]:
+                return cooldown_result
 
             # All checks passed
             logger.info(f"{action.capitalize()} request from user {user_id} approved.")
@@ -173,29 +172,34 @@ class BootRequestHandler:
 
     def check_cooldown(self, user_id: int, action: str) -> dict:
         try:
+            # Query die LETZTE Request überhaupt (egal von wem, egal was für Action)
             last_request = self.host_collection.find_one(
-                {"user_id": user_id, "action": action}, sort=[("timestamp", -1)]
+                {"hostname": self.host_name},
+                sort=[("boot.request.timestamp", -1)]
             )
-            if last_request:
-                last_timestamp = last_request.get("timestamp")
-                if last_timestamp:
-                    elapsed = (datetime.now() - last_timestamp).total_seconds()
-
-                    if elapsed < self.cooldown_seconds:
-                        remaining = self.cooldown_seconds - int(elapsed)
-                        logger.warning(
-                            f"Cooldown active for user {user_id}. Remaining: {remaining}s."
-                        )
-                        return {
-                            "success": False,
-                            "error": f"Cooldown active. Wait {remaining} seconds.",
-                        }
-
-            logger.info(f"Cooldown check passed for user {user_id}.")
+            
+            if not last_request:
+                return {"success": True}
+            
+            # Hole timestamp aus der neuen Struktur
+            last_timestamp = last_request.get("boot", {}).get("request", {}).get("timestamp")
+            
+            if not last_timestamp:
+                return {"success": True}
+            
+            now = datetime.now()
+            elapsed = (now - last_timestamp).total_seconds()
+            
+            if elapsed < self.cooldown_seconds:
+                remaining = self.cooldown_seconds - int(elapsed)
+                return {
+                    "success": False,
+                    "error": f"Cooldown active. Wait {remaining} seconds before next boot.",
+                }
+            
             return {"success": True}
 
         except Exception as e:
-            logger.error(f"Error checking cooldown for user {user_id}: {e}")
             return {"success": False, "error": f"Error checking cooldown: {e}"}
 
     def _is_within_working_hours(self, working_hours_config: dict) -> bool:
