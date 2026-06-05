@@ -1,10 +1,10 @@
 {
     "message_types": {
-        "success": "✅ ",
-        "error": "🟥 ",
+        "success": ":green_square: ",
+        "answer": "💬 ",
+        "error": ":red_square: ",
         "info": "ℹ️ ",
         "warning": "⚠️ ",
-        "processing": "⏳ ",
         "appendix": ""
     },
     "error": {
@@ -17,7 +17,13 @@
         "non_slash_prefix": "{user} Der command-prefix hat sich geändert. Verwende bitte \"/\"."
     },
     "response": {
-        "status": "CL4P-TP ist **{status}**!",
+        "status": {
+            "generic": "CL4P-TP {status}",
+            "on": "ist **online**.",
+            "off": "ist **offline**.",
+            "starting": "bootet gerade.",
+            "error": "status konnte nicht abgerufen werden: {error}"
+        },
         "request": {
             "success": {
                 "generic": "Deine Anfrage wurde akzeptiert! {action}",
