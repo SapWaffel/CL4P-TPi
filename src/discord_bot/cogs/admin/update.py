@@ -37,7 +37,8 @@ class UpdateCog(commands.Cog):
             result = GitUpdater.update()
 
             if result["success"]:
-                await interaction.followup.send("Update successful! Restarting the bot...")
+                #edit message to show the output of the git pull command
+                await interaction.edit_original_response(content=f"Update successful:\n```\n{result['output']}\n```")
                 logger.info("Update successful, bot is restarting")
 
                 await asyncio.sleep(2)
