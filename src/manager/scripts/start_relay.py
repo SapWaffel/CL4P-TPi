@@ -2,14 +2,12 @@
 import sys
 import logging
 
-from src.manager.service.boot import boot
-
 logger = logging.getLogger(__name__)
 
 def start_relay():
     try:
         logger.info("Starting relay...")
-        boot()
+        #
         print("Relay started successfully.")
         return 0
     except Exception as e:
