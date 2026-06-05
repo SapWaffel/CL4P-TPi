@@ -1,5 +1,5 @@
 import logging
-from src.db.mongo_client import get_mongo_client
+from src.util.db.mongo_client import get_mongo_client
 
 logger = logging.getLogger(__name__)
 

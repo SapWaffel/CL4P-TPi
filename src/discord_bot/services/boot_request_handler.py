@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from src.models import BootRequestStatus, RightsLevel
 from src.discord_bot.services.restriction_service import RestrictionService
-from src.db.mongo_client import get_mongo_client
+from src.util.db.mongo_client import get_mongo_client
 
 logger = logging.getLogger(__name__)
 

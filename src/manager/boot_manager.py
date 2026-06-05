@@ -4,7 +4,7 @@ import subprocess
 import time
 import os
 from pathlib import Path
-from src.db.mongo_client import get_mongo_client
+from src.util.db.mongo_client import get_mongo_client
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,6 @@ class BootManager:
                         boot_data = host.get("boot", {})
                         request_data = boot_data.get("request", {})
                         action = request_data.get("action")
-                        user_id = request_data.get("user_id")
 
                         if action:
                             logger.info(f"Received boot request: {action} for host: {self.HOST_NAME}")
