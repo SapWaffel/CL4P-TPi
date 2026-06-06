@@ -20,7 +20,10 @@
             "on": "ist **online**.",
             "off": "ist **offline**.",
             "starting": "bootet gerade.",
-            "error": "status konnte nicht abgerufen werden: {error}"
+            "error": "status konnte nicht abgerufen werden: {error}",
+            "hostname_alias": {
+                "claptp": "CL4P-TP"
+            }
         },
         "request": {
             "success": {

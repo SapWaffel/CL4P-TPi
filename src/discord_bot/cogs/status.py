@@ -25,24 +25,47 @@ class StatusCog(commands.Cog):
             if not status_result["success"]:
                 error_msg = status_result.get("error", "unknown error")
                 await interaction.followup.send(
-                    StringManager.get(StringType.WARN, "response.status.generic", error=error_msg)
+                    StringManager.get(
+                        StringType.WARN,
+                        "response.status.error",
+                        error=error_msg
+                    )
                 )
                 return
 
-            status = status_result["status"]
-            
-            # Hole Status-Text aus strings.json
-            status_text = StringManager.get(StringType.APPENDIX, f"response.status.{status}")
-            
-            # Kombiniere mit generic Message
-            message = StringManager.get(StringType.ANSWER, "response.status.generic", status=status_text)
+            hostname_key = status_result.get("hostname", "claptp")
+            hostname_alias = StringManager.get(
+                StringType.APPENDIX,
+                f"response.status.hostname_alias.{hostname_key}"
+            )
+
+            if hostname_alias == f"Missing string for key: response.status.hostname_alias.{hostname_key}" or "Invalid string path" in hostname_alias:
+                hostname_alias = hostname_key
+
+            status = status_result.get("status", "unknown")
+
+            status_text = StringManager.get(
+                StringType.APPENDIX,
+                f"response.status.{status}"
+            )
+
+            message = StringManager.get(
+                StringType.ANSWER,
+                "response.status.generic",
+                hostname=hostname_alias,
+                status=status_text
+            )
             await interaction.followup.send(message)
             logger.info(f"Status command used by {interaction.user.id}: {status}")
 
         except Exception as e:
             logger.error(f"Error occurred in status command: {e}")
             await interaction.followup.send(
-                StringManager.get(StringType.WARN, "response.status.generic", error=str(e))
+                StringManager.get(
+                    StringType.WARN,
+                    "response.status.error",
+                    error=str(e)
+                )
             )
 
 async def setup(bot):
