@@ -10,7 +10,6 @@ class GitUpdater:
     @staticmethod
     def update() -> dict:
         try:
-            logger.info("Fetching latest changes from git...")
             result = subprocess.run(
                 ["git", "pull", "origin", "main"],
                 cwd=str(GitUpdater.PROJECT_ROOT),

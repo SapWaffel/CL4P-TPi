@@ -15,7 +15,6 @@ class UserSyncCog(commands.Cog):
     
     @commands.Cog.listener()
     async def on_ready(self):
-        logger.info("UserSyncCog ready... Synchronizing users...")
         
         try:
             guild = self.bot.get_guild(int(ConfigManager.get_config("discord.guild_id")))
@@ -26,7 +25,6 @@ class UserSyncCog(commands.Cog):
             
             # fetch all members
             members = [member async for member in guild.fetch_members(limit=None)]
-            logger.info(f"Fetched {len(members)} members from guild {GUILD_ID.id}.")
 
             # sync to database
             synced = 0
@@ -48,4 +46,3 @@ class UserSyncCog(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(UserSyncCog(bot))
-    logger.info("UserSyncCog loaded")
