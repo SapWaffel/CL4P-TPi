@@ -19,7 +19,7 @@ class MongoDBClient:
         
         self.client = None
         self.databases = {}
-        self.config = ConfigManager.get_config("mongodb")
+        self.config = ConfigManager.get("mongodb")
         
         uri = self.config.get("uri")
         self._connect(uri)

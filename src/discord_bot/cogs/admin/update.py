@@ -7,9 +7,10 @@ import sys
 
 from src.config_manager import ConfigManager, StringManager, StringType 
 from src.util.git_update import GitUpdater
+from src.util.db.database_manager import DatabaseManager
 
 logger = logging.getLogger(__name__)
-GUILD_ID = discord.Object(id=ConfigManager.get_config("discord.guild_id"))
+GUILD_ID = discord.Object(id=ConfigManager.get("discord.guild_id"))
 
 class UpdateCog(commands.Cog):
     def __init__(self, bot):
@@ -17,8 +18,17 @@ class UpdateCog(commands.Cog):
 
     @app_commands.command(name="update", description="Fetch the latest changes from git and restart the bot")
     @app_commands.guilds(GUILD_ID)
-    @app_commands.default_permissions(administrator=True)
     async def update(self, interaction: discord.Interaction):
+
+        rights_level = DatabaseManager.get("discord", "user", {"discord_id": int(interaction.user.id)}, "rights_level")
+        if not rights_level:
+            response = StringManager.get(StringType.WARN, "error.generic")
+            await interaction.response.send_message(response, ephemeral=True)
+            return
+        if rights_level < 3:
+            response = StringManager.get(StringType.WARN, "error.no_permission")
+            await interaction.response.send_message(response, ephemeral=True)
+            return
 
         if not interaction.user.guild_permissions.administrator:
             await interaction.response.send_message(

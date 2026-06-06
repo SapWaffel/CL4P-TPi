@@ -9,28 +9,24 @@ logger = logging.getLogger(__name__)
 class ConfigManager:
     _instance = None
     _config = None
-    
+    _config_path = "config/config.json"
+        
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self, config_path: str = "config/config.json"):
+    def __init__(self):
         if ConfigManager._config is not None:
             return
         
-        self.config_path = Path(config_path)
+        self.config_path = Path(self._config_path)
         self._load_config()
     
     def _load_config(self) -> None:
         try:
-            # Checke ob config.json existiert
             if not self.config_path.exists():
-                logger.warning(f"Config file not found at {self.config_path}")
-                
-                # Versuche aus Template zu erstellen
                 template_path = self.config_path.parent / "config_template.json"
-                
                 if template_path.exists():
                     import shutil
                     shutil.copy(template_path, self.config_path)
@@ -48,7 +44,7 @@ class ConfigManager:
             raise RuntimeError(f"Error loading/creating configuration file: {e}")
         
     @staticmethod
-    def get_config(key_path: str, default: Any = None) -> Any:
+    def get(key_path: str, default: Any = None) -> Any:
         if ConfigManager._config is None:
             raise RuntimeError("Configuration not loaded. Please initialize ConfigManager first.")
         
@@ -62,13 +58,34 @@ class ConfigManager:
                 return default
 
         return value if value is not None else default
-    
+
+    @staticmethod
+    def set(key_path: str, value: Any) -> None:
+        if ConfigManager._config is None:
+            raise RuntimeError("Configuration not loaded. Please initialize ConfigManager first.")
+        if ConfigManager._config_path is None:
+            raise RuntimeError("Configuration path not set.")
+
+        keys = key_path.split(".")
+        target = ConfigManager._config
+
+        for key in keys[:-1]:
+            if key not in target or not isinstance(target[key], dict):
+                target[key] = {}
+            target = target[key]
+
+        target[keys[-1]] = value
+
+        with open(ConfigManager._config_path, "w", encoding="utf-8") as f:
+            json.dump(ConfigManager._config, f, indent=4, ensure_ascii=False)
+
+        ConfigManager.reload()
+
     @staticmethod
     def reload() -> None:
         ConfigManager._config = None
         manager = ConfigManager()
         manager._load_config()
-_manager = ConfigManager()
 
 class StringManager:
     _instance = None
@@ -116,7 +133,6 @@ class StringManager:
             return cls._strings['message_types'][msg_type.value]
         except KeyError:
             return cls._strings['message_types']['info']
-
 class StringType(Enum):
     SUCCESS = "success"
     ANSWER = "answer"

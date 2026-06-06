@@ -8,7 +8,7 @@ from src.config_manager import ConfigManager, StringManager, StringType
 from src.discord_bot.services.status_service import StatusService
 
 logger = logging.getLogger(__name__)
-GUILD_ID = discord.Object(id=int(ConfigManager.get_config("discord.guild_id")))
+GUILD_ID = discord.Object(id=int(ConfigManager.get("discord.guild_id")))
 
 class StatusCog(commands.Cog):
     def __init__(self, bot):

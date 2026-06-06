@@ -17,7 +17,7 @@ class UserService:
                 "username": username,
                 "avatar": avatar,
                 "roles": roles or [],
-                "boot_rights_level": 1,
+                "rights_level": 1,
                 "added_date": datetime.now(),
                 "notes": None,
             }
