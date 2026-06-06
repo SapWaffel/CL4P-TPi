@@ -9,7 +9,7 @@
     },
     "error": {
         "generic": "Etwas ist schief gelaufen. Bitte kontaktiere einen Administrator.",
-        "no_permission": "Du hast keine Berechtigung, diesen Befehl zu verwenden.",
+        "no_permission": "Du hast keine Berechtigung, diese Aktion durchzuführen.",
         "unknown_command": "Unbekannter Befehl. Verwende `{prefix}help`, um eine Liste der verfügbaren Befehle zu erhalten.",
         "unknown_user": "Deine Benutzer-ID wurde nicht in der Datenbank gefunden. Bitte kontaktiere einen Administrator.",
         "wrong_channel": "{user} - Nuh uh {channel}"
@@ -20,10 +20,7 @@
             "on": "ist **online**.",
             "off": "ist **offline**.",
             "starting": "bootet gerade.",
-            "error": "status konnte nicht abgerufen werden: {error}",
-            "hostname_alias": {
-                "claptp": "CL4P-TP"
-            }
+            "error": "status konnte nicht abgerufen werden: {error}"
         },
         "request": {
             "success": {
@@ -47,5 +44,8 @@
             "success": "Bot erfolgreich aktualisiert! Neustart wird durchgeführt...",
             "error": "Fehler beim Aktualisieren des Bots: {error}"
         }
+    },
+    "hostname_alias": {
+        "claptp": "CL4P-TP"
     }
 }

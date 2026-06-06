@@ -32,7 +32,6 @@ class ConfigManager:
                 template_path = self.config_path.parent / "config_template.json"
                 
                 if template_path.exists():
-                    logger.info(f"Creating config from template: {template_path}")
                     import shutil
                     shutil.copy(template_path, self.config_path)
                     logger.info(f" Config created successfully at {self.config_path}")
@@ -44,7 +43,6 @@ class ConfigManager:
             # Lade die Config
             with open(self.config_path, 'r', encoding='utf-8') as f:
                 ConfigManager._config = json.load(f)
-                logger.info(f" Configuration loaded from {self.config_path}")
         
         except Exception as e:
             raise RuntimeError(f"Error loading/creating configuration file: {e}")
@@ -94,13 +92,16 @@ class StringManager:
             raise RuntimeError(f"Error loading strings file: {e}")
         
     @classmethod
-    def get(cls, msg_type, key, **kwargs) -> str:
+    def get(cls, msg_type, key, default=None, **kwargs) -> str:
         keys = key.split('.')
         string = cls._strings
 
         for k in keys:
             if isinstance(string, dict):
-                string = string.get(k, f"Missing string for key: {key}")
+                if default is not None:
+                    string = string.get(k, default)
+                else:
+                    string = string.get(k, f"Missing string for key: {key}")
             else:
                 return f"Invalid string path: {key}"
         
