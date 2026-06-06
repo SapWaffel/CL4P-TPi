@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import logging
+from typing import Literal
 
 from src.config_manager import ConfigManager, StringManager, StringType
 from src.discord_bot.services.status_service import StatusService
@@ -15,12 +16,17 @@ class StatusCog(commands.Cog):
 
     @app_commands.command(name="status", description="Get the boot status of a host")
     @app_commands.guilds(GUILD_ID)
-    async def status(self, interaction: discord.Interaction):
+    async def status(
+        self,
+        interaction: discord.Interaction,
+        host_type: Literal["hardware", "vm"] = "hardware",
+        hostname: Literal["claptp", "vm100-minecraft"] = "claptp",
+    ):
         await interaction.response.defer()
 
         try:
             status_service = StatusService()
-            status_result = status_service.get_boot_status()
+            status_result = status_service.get_boot_status(host_type=host_type, hostname=hostname)
 
             if not status_result["success"]:
                 error_msg = status_result.get("error", "unknown error")
@@ -33,15 +39,9 @@ class StatusCog(commands.Cog):
                 )
                 return
 
-            hostname_key = status_result.get("hostname", "claptp")
-            hostname_alias = StringManager.get(
-                StringType.APPENDIX,
-                f"response.status.hostname_alias.{hostname_key}"
+            hostname = StringManager.get(
+                StringType.APPENDIX, f"hostname_alias.{hostname}", default=hostname
             )
-
-            if hostname_alias == f"Missing string for key: response.status.hostname_alias.{hostname_key}" or "Invalid string path" in hostname_alias:
-                hostname_alias = hostname_key
-
             status = status_result.get("status", "unknown")
 
             status_text = StringManager.get(
@@ -52,11 +52,10 @@ class StatusCog(commands.Cog):
             message = StringManager.get(
                 StringType.ANSWER,
                 "response.status.generic",
-                hostname=hostname_alias,
+                hostname=hostname,
                 status=status_text
             )
             await interaction.followup.send(message)
-            logger.info(f"Status command used by {interaction.user.id}: {status}")
 
         except Exception as e:
             logger.error(f"Error occurred in status command: {e}")
