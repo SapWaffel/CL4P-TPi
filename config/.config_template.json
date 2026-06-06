@@ -20,7 +20,7 @@
         ]
     },
     "discord": {
-        "token": "YOUR_TOKEN",
+        "token": "YOUR_BOT_TOKEN",
         "guild_id": "YOUR_GUILD_ID",
         "watch_for_steve": true,
         "quotes": [
