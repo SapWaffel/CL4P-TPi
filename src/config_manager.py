@@ -96,7 +96,7 @@ class StringManager:
 class StringType(Enum):
     SUCCESS = "success"
     ANSWER = "answer"
-    ERROR = "error"
+    DENY = "deny"
     INFO = "info"
-    WARNING = "warning"
+    WARN = "warn"
     APPENDIX = "appendix"

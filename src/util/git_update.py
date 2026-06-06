@@ -21,15 +21,15 @@ class GitUpdater:
 
             if result.returncode != 0:
                 logger.error(f"Git pull failed: {result.stderr}")
-                return {"success": False, "message": result.stderr}
+                return {"success": False, "error": result.stderr}
 
             logger.info(f"Git pull successful: \n{result.stdout}")
-            return {"success": True, "message": "Git pull successful", "output": result.stdout}
+            return {"success": True, "output": result.stdout}
 
         except subprocess.TimeoutExpired:
             logger.error("Git pull timed out")
-            return {"success": False, "message": "Git pull timed out"}
+            return {"success": False, "error": "Git pull timed out"}
 
         except Exception as e:
             logger.error(f"Error during git pull: {e}")
-            return {"success": False, "message": str(e)}
+            return {"success": False, "error": str(e)}

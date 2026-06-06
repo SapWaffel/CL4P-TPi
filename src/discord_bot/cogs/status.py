@@ -25,7 +25,7 @@ class StatusCog(commands.Cog):
             if not status_result["success"]:
                 error_msg = status_result.get("error", "unknown error")
                 await interaction.followup.send(
-                    StringManager.get(StringType.ERROR, "response.status.generic", error=error_msg)
+                    StringManager.get(StringType.WARN, "response.status.generic", error=error_msg)
                 )
                 return
 
@@ -42,7 +42,7 @@ class StatusCog(commands.Cog):
         except Exception as e:
             logger.error(f"Error occurred in status command: {e}")
             await interaction.followup.send(
-                StringManager.get(StringType.ERROR, "response.status.generic", error=str(e))
+                StringManager.get(StringType.WARN, "response.status.generic", error=str(e))
             )
 
 async def setup(bot):

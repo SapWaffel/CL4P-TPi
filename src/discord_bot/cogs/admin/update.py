@@ -22,7 +22,7 @@ class UpdateCog(commands.Cog):
 
         if not interaction.user.guild_permissions.administrator:
             await interaction.response.send_message(
-                StringManager.get(StringType.ERROR, "error.no_permission"),
+                StringManager.get(StringType.DENY, "error.no_permission"),
                 ephemeral=True
             )
             logger.warning(f"Unauthorized update attempted by {interaction.user}")
@@ -31,24 +31,24 @@ class UpdateCog(commands.Cog):
         await interaction.response.defer()
 
         try:
-            await interaction.followup.send("Fetching latest changes from git...")
+            await interaction.followup.send(StringManager.get(StringType.INFO, "response.update.fetch"))
             logger.info(f"User {interaction.user} initiated an update")
 
             result = GitUpdater.update()
 
             if result["success"]:
                 #edit message to show the output of the git pull command
-                await interaction.edit_original_response(content=f"Update successful:\n```\n{result['output']}\n```")
+                await interaction.edit_original_response(content=StringManager.get(StringType.INFO, "response.update.success"))
                 logger.info("Update successful, bot is restarting")
 
                 await asyncio.sleep(2)
                 sys.exit(0)
             else:
-                await interaction.followup.send(f"Update failed: {result['message']}")
-                logger.error(f"Update failed: {result['message']}")
+                await interaction.followup.send(StringManager.get(StringType.WARN, "response.update.error", error=result['error']))
+                logger.error(f"Update failed: {result['error']}")
 
         except Exception as e:
-            await interaction.followup.send(f"An error occurred during update: {str(e)}")
+            await interaction.followup.send(StringManager.get(StringType.WARN, "response.update.error", error=str(e)))
             logger.error(f"Error during update: {e}")
 
 async def setup(bot):

@@ -2,23 +2,21 @@
     "message_types": {
         "success": ":green_square: ",
         "answer": "💬 ",
-        "error": ":red_square: ",
+        "deny": ":red_square: ",
         "info": "ℹ️ ",
-        "warning": "⚠️ ",
+        "warn": "⚠️ ",
         "appendix": ""
     },
     "error": {
         "generic": "Etwas ist schief gelaufen. Bitte kontaktiere einen Administrator.",
         "no_permission": "Du hast keine Berechtigung, diesen Befehl zu verwenden.",
         "unknown_command": "Unbekannter Befehl. Verwende `{prefix}help`, um eine Liste der verfügbaren Befehle zu erhalten.",
-        "wrong_channel": "{user} - Nuh uh {channel}",
-        "private_message_only": "Dieser Befehl kann nur in privaten Nachrichten verwendet werden.",
-        "maintenance": "Der Bot befindet sich im Wartungsmodus. Bitte versuche es später erneut.",
-        "non_slash_prefix": "{user} Der command-prefix hat sich geändert. Verwende bitte \"/\"."
+        "unknown_user": "Deine Benutzer-ID wurde nicht in der Datenbank gefunden. Bitte kontaktiere einen Administrator.",
+        "wrong_channel": "{user} - Nuh uh {channel}"
     },
     "response": {
         "status": {
-            "generic": "CL4P-TP {status}",
+            "generic": "{hostname} {status}",
             "on": "ist **online**.",
             "off": "ist **offline**.",
             "starting": "bootet gerade.",
@@ -31,32 +29,20 @@
                 "stop": "CL4P-TP wird heruntergefahren..."
             },
             "deny": {
-                "generic": "Deine Anfrage wurde abgelehnt.",
+                "generic": "Deine Anfrage wurde abgelehnt. ({reason})",
                 "reasons": {
-                    "cooldown": "Boot-Cooldown ({m}:{s} remaining)",
-                    "boot_state": "Already {state}",
-                    "starting": "Already booting..."
-                },
-                "invalid": "Invalid request. CL4P-TP is already {state}."
+                    "cooldown": "Boot-Cooldown - {m}:{s}",
+                    "boot_state": "{hostname} ist schon {state}",
+                    "starting": "{hostname} bootet gerade.",
+                    "unknown_host": "Unbekannter Host.",
+                    "unknown_error": "Unbekannter Fehler: {error}"
+                }
             }
         },
-        "boot": {
-            "success": "CL4P-TP wird booted!",
-            "error": "Fehler beim Booten von CL4P-TP: {error}"
-        },
-        "reboot": {
-            "success": "CL4P-TP wird neu gestartet!",
-            "error": "Fehler beim Neustarten von CL4P-TP: {error}"
-        },
-        "reload": {
-            "start": "Bot wird neu gestartet...",
-            "success": "{user}Der Bot wurde erfolgreich neu gestartet!",
-            "partial_success": "{user}Der Bot wurde neu gestartet, aber es gab ein Problem: {error}"
-        },
-        "maintenance": {
-            "true": "Wartungsmodus aktiviert. Der Bot ist jetzt für alle Benutzer außer Administratoren nicht verfügbar.",
-            "false": "Wartungsmodus deaktiviert. Der Bot ist jetzt für alle Benutzer verfügbar.",
-            "error": "Fehler beim Ändern des Wartungsmodus: {error}"
+        "update": {
+            "fetch": "Hole neueste Updates von GitHub...",
+            "success": "Bot erfolgreich aktualisiert! Neustart wird durchgeführt...",
+            "error": "Fehler beim Aktualisieren des Bots: {error}"
         }
     }
 }

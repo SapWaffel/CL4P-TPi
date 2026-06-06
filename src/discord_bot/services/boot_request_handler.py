@@ -80,34 +80,35 @@ class BootRequestHandler:
 
             if not host:
                 logger.warning(f"Host {self.host_name} not found in database.")
-                return {"success": False, "error": "Host not found"}
+                return {"success": False, "reason": "unknown_host"}
 
             current_status = host.get("boot", {}).get("status", "unknown")
 
             if action == "start" and current_status == "on":
                 logger.warning(f"Host {self.host_name} is already online.")
-                return {"success": False, "error": "Host is already online"}
+                return {"success": False, "reason": "boot_state", "state": "online"}
 
             if action == "stop" and current_status == "off":
                 logger.warning(f"Host {self.host_name} is already offline.")
-                return {"success": False, "error": "Host is already offline"}
+                return {"success": False, "reason": "boot_state", "state": "offline"}
 
             if current_status == "starting":
                 logger.warning(f"Host {self.host_name} is currently starting up.")
-                return {"success": False, "error": "Host is currently starting up"}
+                return {"success": False, "reason": "starting"}
 
             logger.info(f"Host {self.host_name} status check passed.")
             return {"success": True, "status": BootRequestStatus.APPROVED.value}
 
         except Exception as e:
             logger.error(f"Error occurred while checking host status: {e}")
-            return {"success": False, "error": f"Error checking host status: {e}"}
+            return {"success": False, "reason": "unknown_error", "error": str(e)}
 
     def check_restrictions(self, user_id: int, action: str) -> dict:
         try:
             result = self.restriction_service.get_all_restrictions()
             if not result["success"]:
-                return {"success": False, "error": "Restriction not available"}
+                logger.error(f"Error fetching restrictions: {result.get('error', 'unknown')}")
+                return {"success": False, "reason": "unknown_error", "error": result.get("error", "unknown")}
 
             restrictions = result["restrictions"]
 
@@ -168,7 +169,7 @@ class BootRequestHandler:
             logger.error(
                 f"Error occurred while handling boot request from user {user_id}: {e}"
             )
-            return {"success": False, "error": f"{e}"}
+            return {"success": False, "reason": "unknown_error", "error": str(e)}
 
     def check_cooldown(self, user_id: int, action: str) -> dict:
         try:
@@ -194,13 +195,15 @@ class BootRequestHandler:
                 remaining = self.cooldown_seconds - int(elapsed)
                 return {
                     "success": False,
-                    "error": f"Cooldown active. Wait {remaining} seconds before next boot.",
+                    "reason": "cooldown",
+                    "m": remaining // 60,
+                    "s": remaining % 60
                 }
             
             return {"success": True}
 
         except Exception as e:
-            return {"success": False, "error": f"Error checking cooldown: {e}"}
+            return {"success": False, "reason": "unknown_error", "error": f"Error checking cooldown: {e}"}
 
     def _is_within_working_hours(self, working_hours_config: dict) -> bool:
         """
