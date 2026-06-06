@@ -1,23 +1,18 @@
 import os
+import random
 import discord
 from discord.ext import commands
 import logging
 
 from src.config_manager import ConfigManager, StringManager
-from src.discord_bot.services.restriction_service import RestrictionService
 
-# Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# load config
 TOKEN = ConfigManager.get_config("discord.token")
 GUILD_ID = discord.Object(id=int(ConfigManager.get_config("discord.guild_id")))
-
-# StringManager beim Start initialisieren
 string_manager = StringManager()
 
-# Intents
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
@@ -26,25 +21,35 @@ class CL4PiBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.synced = False
-    
+        self.bio_set = False
+
     async def on_ready(self):
         logging.info(f"Logged in as {self.user} (ID: {self.user.id})")
+
+        if not self.bio_set:
+            quotes = ConfigManager.get_config("discord.quotes", [])
+            if quotes:
+                quote = random.choice(quotes)
+                try:
+                    await self.user.edit(bio=quote)
+                    self.bio_set = True
+                except Exception as e:
+                    logging.error(f"Error setting bot bio: {e}")
 
         if not self.synced:
             await self.__sync_commands()
             self.synced = True
-    
+
     async def __sync_commands(self):
         try:
             synced = await self.tree.sync(guild=GUILD_ID)
             logging.info(f"Synced {len(synced)} commands to guild {GUILD_ID.id}")
         except Exception as e:
             logging.error(f"Error syncing commands: {e}")
-    
+
     async def close(self):
         await super().close()
         logging.info("Bot has been closed.")
-    
 
 # Bot
 bot = CL4PiBot(command_prefix="/", intents=intents)
