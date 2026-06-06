@@ -21,20 +21,11 @@ class CL4PiBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.synced = False
-        self.bio_set = False
 
     async def on_ready(self):
         logging.info(f"Logged in as {self.user} (ID: {self.user.id})")
 
-        if not self.bio_set:
-            quotes = ConfigManager.get_config("discord.quotes", [])
-            if quotes:
-                quote = random.choice(quotes)
-                try:
-                    await self.user.edit(bio=quote)
-                    self.bio_set = True
-                except Exception as e:
-                    logging.error(f"Error setting bot bio: {e}")
+        await self.update_presence()
 
         if not self.synced:
             await self.__sync_commands()
@@ -46,6 +37,11 @@ class CL4PiBot(commands.Bot):
             logging.info(f"Synced {len(synced)} commands to guild {GUILD_ID.id}")
         except Exception as e:
             logging.error(f"Error syncing commands: {e}")
+
+    async def update_presence(self):
+        quotes = ConfigManager.get_config("discord.quotes", [])
+        await self.application.edit(description=random.choice(quotes))
+        await self.change_presence(activity=discord.Game(name="Borderlands"))
 
     async def close(self):
         await super().close()
@@ -75,8 +71,11 @@ async def setup_hook():
 def run():
     if TOKEN is None or TOKEN == "YOUR_BOT_TOKEN":
         raise ValueError("Bot token is not set in the configuration.")
+    if GUILD_ID is None or GUILD_ID.id == 0 or GUILD_ID.id == "YOUR_GUILD_ID":
+        raise ValueError("Guild ID is not set in the configuration.")
     
     logger.info("Starting CL4P-TPi Bot...")
+    
     try:
         bot.run(TOKEN)
     except Exception as e:
