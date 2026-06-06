@@ -3,6 +3,9 @@ import logging
 from src.discord_bot.bot import run
 from src.manager.boot_manager import BootManager
 
+from src.config_manager import ConfigManager
+
+
 logger = logging.getLogger(__name__)
 
 def run_boot_manager():
@@ -13,6 +16,13 @@ def run_boot_manager():
         logger.error(f"Boot manager encountered an error: {e}")
 
 if __name__ == "__main__":
+
+    try:
+        ConfigManager()
+    except Exception as e:
+        logger.error(f"Error initializing configuration: {e}")
+        exit(1)
+
     boot_manager_thread = threading.Thread(target=run_boot_manager, daemon=True)
     boot_manager_thread.start()
     logger.info("Boot manager started in background thread")

@@ -2,6 +2,9 @@ import json
 from pathlib import Path
 from typing import Any
 from enum import Enum
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ConfigManager:
     _instance = None
@@ -21,10 +24,30 @@ class ConfigManager:
     
     def _load_config(self) -> None:
         try:
+            # Checke ob config.json existiert
+            if not self.config_path.exists():
+                logger.warning(f"Config file not found at {self.config_path}")
+                
+                # Versuche aus Template zu erstellen
+                template_path = self.config_path.parent / "config_template.json"
+                
+                if template_path.exists():
+                    logger.info(f"Creating config from template: {template_path}")
+                    import shutil
+                    shutil.copy(template_path, self.config_path)
+                    logger.info(f" Config created successfully at {self.config_path}")
+                else:
+                    raise FileNotFoundError(
+                        f"Config file not found at {self.config_path} and template not found at {template_path}"
+                    )
+            
+            # Lade die Config
             with open(self.config_path, 'r', encoding='utf-8') as f:
                 ConfigManager._config = json.load(f)
+                logger.info(f" Configuration loaded from {self.config_path}")
+        
         except Exception as e:
-            raise RuntimeError(f"Error loading configuration file at {self.config_path}: {e}")
+            raise RuntimeError(f"Error loading/creating configuration file: {e}")
         
     @staticmethod
     def get_config(key_path: str, default: Any = None) -> Any:
