@@ -1,223 +1,151 @@
 import logging
 from datetime import datetime
-from src.models import BootRequestStatus, RightsLevel
-from src.discord_bot.services.restriction_service import RestrictionService
-from src.util.db.mongo_client import get_mongo_client
+from src.util.db.database_manager import DatabaseManager
 
 logger = logging.getLogger(__name__)
 
-
 class BootRequestHandler:
-    def __init__(
-        self,
-        host_type="hardware",
-        host_name="claptp",
-        cooldown_seconds: int = 300,
-        rights_level: RightsLevel = RightsLevel.BASIC,
-    ):
-        self.restriction_service = RestrictionService()
-
-        mongo_client = get_mongo_client()
-        self.host_db = mongo_client.get_db("host")
-        self.host_collection = self.host_db[host_type]
-
-        self.discord_db = mongo_client.get_db("discord")
-        self.boot_restriction_collection = self.discord_db["boot_restriction"]
-
-        self.host_type = host_type
-        self.host_name = host_name
-        self.cooldown_seconds = cooldown_seconds
-        self.rights_level = rights_level
-
-    def handle_request(self, action: str) -> dict:
+    def handle_request(
+            self,
+            host_type= "hardware",
+            hostname = "claptp",
+            action = "start",
+            skips = []
+            ):
         try:
-            if action not in ["start", "stop", "restart"]:
-                return {"success": False, "reason": "invalid_action"}
-            
-            # 1) Check host status
-            status_result = self.check_host_status(action)
-            if not status_result["success"]:
-                return status_result
+            # 1) check arguments
+            valid_host_types = ["hardware", "vm"]
+            if host_type not in valid_host_types:
+                logger.warning("Invalid host_type requested:" + host_type)
+                return {"success": False, "reason": "internal", "error": "invalid host_type"}
 
-            # 2) Check restrictions
-            if self.rights_level != RightsLevel.ADMIN:
-                restriction_result = self.check_restrictions(action)
+            host = DatabaseManager.get("host", host_type, {"hostname": hostname})
+            if not host:
+                logger.warning("Invalid hostname requested:" + hostname)
+                return {"success": False, "reason": "internal", "error": "invalid hostname"}
+
+            if action not in ["start", "stop", "restart", "kill"]:
+                logger.warning("Invalid action requested:" + action)
+                return {"success": False, "reason": "internal", "error": "invalid action"}
+
+            # 2) Check host status
+            if "host_status" not in skips:
+                status_result = self.check_host_status(action, host_type, hostname)
+                if not status_result["success"] or not status_result["pass"]:
+                    return status_result
+
+            # 3) Check restrictions
+            if "boot_restrictions" not in skips:
+                restriction_result = self.check_restrictions(action, host_type, hostname)
                 if not restriction_result["success"]:
                     return restriction_result
-                if restriction_result["status"] == BootRequestStatus.REJECTED.value:
+                if not restriction_result["pass"]:
                     return restriction_result
 
-            # 3) Check cooldown
-            cooldown_result = self.check_cooldown()
-            if not cooldown_result["success"]:
-                return cooldown_result
+            # 4) Check cooldown
+            if "cooldown" not in skips:
+                cooldown_result = self.check_cooldown(host_type, hostname)
+                if not cooldown_result["success"] or not cooldown_result["pass"]:
+                    return cooldown_result
 
-            # 4) Set boot.request flag in MongoDB
-            self.host_collection.update_one(
-                {"hostname": self.host_name},
-                {
-                    "$set": {
-                        "boot.request.requested": True,
-                        "boot.request.action": action,
-                        "boot.request.timestamp": datetime.now(),
-                    }
-                },
-            )
-
-            return {
-                "success": True,
-                "status": BootRequestStatus.APPROVED.value,
-                "reason": "All checks passed",
+            # 5) Enter boot request
+            boot_request = {
+                "requested": True,
+                "action": action,
+                "timestamp": datetime.now(),
             }
+            DatabaseManager.set("host", host_type, {"hostname": hostname}, {"boot.request": boot_request})
 
+            return {"success": True, "approved": True}
+        
         except Exception as e:
-            logger.error(f"Unexpected error occurred: {e}")
-            return {"success": False, "error": f"Unexpected error: {e}"}
+            logger.error(f"Error handling boot request: {e}")
+            return {"success": False, "reason": "internal", "error": str(e)}
 
-    def check_host_status(self, action: str) -> dict:
+    def check_host_status(self, action, host_type, hostname) -> dict:
         try:
-            host = self.host_collection.find_one({"hostname": self.host_name})
-
-            if not host:
-                logger.warning(f"Host {self.host_name} not found in database.")
-                return {"success": False, "reason": "unknown_host"}
-
-            current_status = host.get("boot", {}).get("status", "unknown")
-
-            if action == "restart" and current_status != "on":
-                return {"success": False, "reason": "boot_state", "state": current_status}
-
-            if action == "start" and current_status == "on":
-                return {"success": False, "reason": "boot_state", "state": "online"}
-
-            if action == "stop" and current_status == "off":
-                return {"success": False, "reason": "boot_state", "state": "offline"}
-
-            if current_status == "starting":
-                return {"success": False, "reason": "starting"}
-
-            return {"success": True, "status": BootRequestStatus.APPROVED.value}
-
+            host = DatabaseManager.get("host", host_type, {"hostname": hostname}, "boot")
+            host_status = host.get("status", "unknown")
         except Exception as e:
-            logger.error(f"Error occurred while checking host status: {e}")
-            return {"success": False, "reason": "unknown_error", "error": str(e)}
+            logger.error(f"Failed to fetch host status: {e}")
+            return {"success": False, "reason": str(e)}
 
-    def check_restrictions(self, action: str) -> dict:
-        try:
-            result = self.restriction_service.get_all_restrictions()
-            if not result["success"]:
-                logger.error(f"Error fetching restrictions: {result.get('error', 'unknown')}")
-                return {"success": False, "reason": "unknown_error", "error": result.get("error", "unknown")}
+        #TODO: Kill needs to be dependent on interaction.id rights
+        if host_status == "starting":
+            return {"success": True, "pass": False}
+        elif action == "restart" and host_status != "on":
+            return {"success": True, "pass": False}
+        elif action == "start" and host_status == "on":
+            return {"success": True, "pass": False}
+        elif action == "stop" and host_status == "off":
+            return {"success": True, "pass": False}
 
-            restrictions = result["restrictions"]
+        return {"success": True, "pass": True}
 
+    def check_restrictions(self, action, host_type, hostname):
+        restrictions = DatabaseManager.get("host", host_type, {"hostname": hostname}, "boot.restrictions")
+
+        if restrictions is None or restrictions == []:
+            return {"success": True, "pass": True}
+        
+        restrictions = [r for r in restrictions if r.get("enabled", False)]
+
+        for r in restrictions:
             # 1) ALWAYS_ALLOW
-            for restriction in restrictions:
-                if restriction["type"] == "ALWAYS_ALLOW" and restriction["enabled"]:
-                    if restriction["config"].get(action, False):
-                        return {
-                            "success": True,
-                            "status": BootRequestStatus.APPROVED.value,
-                            "reason": "ALWAYS_ALLOW restriction",
-                        }
-
+            if r["type"] == "ALWAYS_ALLOW":
+                if r["config"].get(action, False):
+                    return {"success": True, "pass": True, "reason": "ALWAYS_ALLOW"}
             # 2) SINGLE_SHOT
-            for restriction in restrictions:
-                if restriction["type"] == "SINGLE_SHOT" and restriction["enabled"]:
-                    if restriction["config"].get(action, False):
-                        # disable SINGLE_SHOT restriction after use
-                        self.restriction_service.collection.update_one(
-                            {"_id": restriction["_id"]}, {"$set": {"enabled": False}}
-                        )
-                        return {
-                            "success": True,
-                            "status": BootRequestStatus.APPROVED.value,
-                            "reason": "SINGLE_SHOT restriction",
-                        }
-
+            if r["type"] == "SINGLE_SHOT":
+                if r["config"].get(action, False):
+                    r["config"][action] = False
+                    DatabaseManager.set("host", host_type, {"hostname": hostname}, {"boot.restrictions": restrictions})
+                    return {"success": True, "pass": True, "reason": "SINGLE_SHOT"}
             # 3) WORKING_HOURS
-            for restriction in restrictions:
-                if restriction["type"] == "WORKING_HOURS" and restriction["enabled"]:
-                    if restriction["config"].get(action, False):
-                        if self._is_within_working_hours(restriction["config"]):
-                            return {
-                                "success": True,
-                                "status": BootRequestStatus.APPROVED.value,
-                                "reason": "WORKING_HOURS restriction",
-                            }
-            return {
-                "success": True,
-                "status": BootRequestStatus.REJECTED.value,
-                "reason": "No applicable restrictions allowed the request",
-            }
+            if r["type"] == "WORKING_HOURS":
+                if r["config"].get(action, False):
+                    if self._is_within_working_hours(r["config"]):
+                        return {"success": True, "pass": True, "reason": "WORKING_HOURS"}
 
-        except Exception as e:
-            logger.error(
-                f"Error occurred while handling boot request: {e}"
-            )
-            return {"success": False, "reason": "unknown_error", "error": str(e)}
-
-    def check_cooldown(self) -> dict:
-        try:
-            last_request = self.host_collection.find_one(
-                {"hostname": self.host_name},
-                sort=[("boot.request.timestamp", -1)]
-            )
-            
-            if not last_request: 
-                return {"success": True}
-
-            # Get last timestamp
-            last_timestamp = last_request.get("boot", {}).get("request", {}).get("timestamp")
-            if not last_timestamp:
-                return {"success": True}
-
-            # Calculate elapsed time
-            now = datetime.now()
-            elapsed = (now - last_timestamp).total_seconds()
-            
-            if elapsed < self.cooldown_seconds:
-                remaining = self.cooldown_seconds - int(elapsed)
-                return {
-                    "success": False,
-                    "reason": "cooldown",
-                    "m": remaining // 60,
-                    "s": remaining % 60
-                }
-            
-            return {"success": True}
-
-        except Exception as e:
-            return {"success": False, "reason": "unknown_error", "error": f"Error checking cooldown: {e}"}
+        return {"success": True, "pass": False, "reason": "RESTRICTION"}
 
     def _is_within_working_hours(self, working_hours_config: dict) -> bool:
-        """
-        Config-Format:
-        {
-            "start": bool,
-            "stop": bool,
-            "hours": [
-                {"days": [1,2,3,4,5], "start": "08:00", "end": "18:00"},
-                {"days": [6], "start": "10:00", "end": "16:00"}
-            ]
-        }
-        """
+        now = datetime.now()
+        current_day = now.weekday() + 1
+        current_time = now.strftime("%H:%M")
+
+        hours = working_hours_config.get("hours", [])
+
+        for period in hours:
+            if current_day in period["days"]:
+                start = period.get("start", "00:00")
+                end = period.get("end", "23:59")
+                if start <= current_time <= end:
+                    return True
+
+        return False
+
+    def check_cooldown(self, host_type, hostname) -> dict:
         try:
-            now = datetime.now()
-            current_day = now.weekday() + 1
-            current_time = now.strftime("%H:%M")
-
-            hours = working_hours_config.get("hours", [])
-
-            for period in hours:
-                if current_day in period["days"]:
-                    start = period.get("start", "00:00")
-                    end = period.get("end", "23:59")
-                    if start <= current_time <= end:
-                        return True
-
-            return False
-
+            last_boot_time = DatabaseManager.get("host", host_type, {"hostname": hostname}, "boot.timestamp")
+            boot_cooldown = DatabaseManager.get("host", host_type, {"hostname": hostname}, "boot.cooldown")
         except Exception as e:
-            logger.error(f"Error occurred while checking working hours: {e}")
-            return False
+            logger.error(f"Failed to fetch boot cooldown: {e}")
+            return {"success": False, "reason":"internal", "error": str(e)}
+
+        if not last_boot_time or not boot_cooldown: 
+            return {"success": True, "pass": True}
+
+        now = datetime.now()
+        elapsed = (now - last_boot_time).total_seconds()
+
+        if elapsed < boot_cooldown:
+            remaining = boot_cooldown - int(elapsed)
+            return {
+                "success": True,
+                "pass": False,
+                "m": remaining // 60,
+                "s": remaining % 60
+            }
+
+        return {"success": True, "pass": True}
