@@ -139,4 +139,4 @@ class StringType(Enum):
     DENY = "deny"
     INFO = "info"
     WARN = "warn"
-    APPENDIX = "appendix"
+    VALUE = "value"

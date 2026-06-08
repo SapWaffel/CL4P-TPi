@@ -5,14 +5,14 @@
         "deny": ":red_square: ",
         "info": "ℹ️ ",
         "warn": "⚠️ ",
-        "appendix": ""
+        "value": ""
     },
     "error": {
-        "generic": "Etwas ist schief gelaufen. Bitte kontaktiere einen Administrator.",
+        "generic": "Es ist ein Fehler aufgetreten: {e}",
+        "unknown": "Es ist ein unbekannter Fehler aufgetreten: {e}",
         "no_permission": "Du hast keine Berechtigung, diese Aktion durchzuführen.",
-        "unknown_command": "Unbekannter Befehl. Verwende `{prefix}help`, um eine Liste der verfügbaren Befehle zu erhalten.",
+        "unknown_command": "Unbekannter Befehl.",
         "unknown_user": "Deine Benutzer-ID wurde nicht in der Datenbank gefunden. Bitte kontaktiere einen Administrator.",
-        "wrong_channel": "{user} - Nuh uh {channel}",
         "maintenance": "Der Bot befindet sich derzeit im Wartungsmodus. Bitte versuche es später erneut."
     },
     "response": {
@@ -24,19 +24,13 @@
             "error": "status konnte nicht abgerufen werden: {error}"
         },
         "request": {
-            "success": {
-                "generic": "Deine Anfrage wurde akzeptiert! {action}",
-                "start": "CL4P-TP wird gestartet...",
-                "stop": "CL4P-TP wird heruntergefahren..."
-            },
+            "success": "Deine Anfrage wurde akzeptiert! ({action} {hostname})",
             "deny": {
                 "generic": "Deine Anfrage wurde abgelehnt. ({reason})",
                 "reasons": {
                     "cooldown": "Boot-Cooldown - {m}:{s}",
-                    "boot_state": "{hostname} ist schon {state}",
-                    "starting": "{hostname} bootet gerade.",
-                    "unknown_host": "Unbekannter Host.",
-                    "unknown_error": "Unbekannter Fehler: {error}"
+                    "boot_state": "{hostname} ist {state}.",
+                    "boot_restriction": "Keine Freigabe für diese Aktion."
                 }
             }
         },
