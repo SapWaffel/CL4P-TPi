@@ -33,15 +33,10 @@ class BootRestriction(BaseModel):
     created_date: datetime = Field(default_factory=datetime.now)
     last_modified: datetime = Field(default_factory=datetime.now)
 
-class BootRequestStatus(str, Enum):
-    PENDING = "pending"
-    APPROVED = "approved"
-    REJECTED = "rejected"
-
 class BootRequest(BaseModel):
     user_id: int
     action: str
-    status: BootRequestStatus = BootRequestStatus.PENDING
+    status: str = "pending"
     timestamp: datetime = Field(default_factory=datetime.now)
     host_type: Optional[str] = "hardware"
     host_name: Optional[str] = "claptp"
