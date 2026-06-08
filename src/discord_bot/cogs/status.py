@@ -40,12 +40,12 @@ class StatusCog(commands.Cog):
                 return
 
             hostname = StringManager.get(
-                StringType.APPENDIX, f"hostname_alias.{hostname}", default=hostname
+                StringType.VALUE, f"hostname_alias.{hostname}", default=hostname
             )
             status = status_result.get("status", "unknown")
 
             status_text = StringManager.get(
-                StringType.APPENDIX,
+                StringType.VALUE,
                 f"response.status.{status}"
             )
 

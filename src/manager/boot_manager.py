@@ -4,107 +4,107 @@ import subprocess
 import time
 import os
 from pathlib import Path
-from src.util.db.mongo_client import get_mongo_client
+from src.util.db.database_manager import DatabaseManager
 
 logger = logging.getLogger(__name__)
 
 class BootManager:
     SCRIPT_PATH = Path(__file__).parent / "scripts" 
-    HOST_TYPE = "hardware"
-    HOST_NAME = "claptp"
     POLL_INTERVAL = 2
 
-    SCRIPT_MAPPING = {
-        "start": "start_relay.py",
-        "stop": "stop_relay.py",
-    }
-
     def __init__(self):
-        self.mongo_client = get_mongo_client()
-        self.host_db = self.mongo_client.get_db("host")
-        self.collection = self.host_db[self.HOST_TYPE]
+        manager = DatabaseManager()
+        self.host_db = manager.mongo_client.get_db("host")
+        self.collections = {
+            "hardware": self.host_db["hardware"],
+            "vm": self.host_db["vm"]
+        }
         self.running = True
     
     def watch_for_boot_request(self):
         try:
-            logger.info(f"Starting to watch for boot requests for host: {self.HOST_NAME}")
-
             while self.running:
                 try:
-                    host = self.collection.find_one({
-                        "hostname": self.HOST_NAME,
-                        "boot.request.requested": True
-                    })
+                    requested_hosts = []
 
-                    if host:
-                        boot_data = host.get("boot", {})
-                        request_data = boot_data.get("request", {})
-                        action = request_data.get("action")
+                    for host_type, collection in self.collections.items():
+                        hosts = collection.find({"boot.request.requested": True})
+                        for host in hosts:
+                            host["_host_type"] = host_type
+                            requested_hosts.append(host)
 
-                        if action:
-                            logger.info(f"Received boot request: {action} for host: {self.HOST_NAME}")
-                            result = self.execute_boot_action(action)
+                    for host in requested_hosts:
+                        host_type = host.get("_host_type")
+                        hostname = host.get("hostname")
+                        boot_request = host.get("boot", {}).get("request", {})
+                        boot_type = host.get("boot",{}).get("type", {})
+                        boot_action = boot_request.get("action")
+
+                        if boot_action and host_type and hostname and boot_type:
+                            logger.info(f"Executing boot request: {boot_action} via {boot_type} for: {host_type}/{hostname}")
+                            result = self.execute_boot_action(host_type, boot_type, boot_action)
                             logger.info(f"Boot action result: {result}")
 
                             # Set requested flag to false
-                            self.collection.update_one(
-                                {"hostname": self.HOST_NAME},
+                            collection = self.collections[host_type]
+                            update_result = collection.update_one(
+                                {"hostname": hostname},
                                 {"$set": {"boot.request.requested": False}}
                             )
+                            logger.debug(f"Request flag cleared for {hostname}: : {update_result.modified_count} document(s) updated")
                         
                     time.sleep(self.POLL_INTERVAL)
                 
                 except Exception as e:
-                    logger.error(f"Error processing boot request: {e}")
+                    logger.error(f"Error processing boot request: {e}", exc_info=True)
                     time.sleep(self.POLL_INTERVAL)
 
         except Exception as e:
             logger.error(f"Unexpected error occurred: {e}")
             raise
 
-    def execute_boot_action(self, action: str, user_id: int = None) -> dict:
+    def execute_boot_action(self, host_type: str, boot_type: str, action: str) -> dict:
+        script_file = self.SCRIPT_PATH / host_type / boot_type / f"{action}.py"
+
+        if not script_file.exists():
+            logger.error(f"Boot script not found: {script_file}")
+            return {"success": False, "error": {"type": "unknown", "e": "Boot-Skript nicht gefunden"}}
+
         try:
-            script_name = self.SCRIPT_MAPPING.get(action)
-            
-            if not script_name:
-                logger.error(f"Invalid boot action: {action}")
-                return {"success": False, "message": f"Invalid action: {action}"}
-            
-            script_path = self.SCRIPT_PATH / script_name
-
-            if not script_path.exists():
-                logger.error(f"Script not found: {script_path}")
-                return {"success": False, "message": f"Script not found: {script_path}"}
-            
-            logger.info(f"Executing script: {script_path} for action: {action}")
-
             env = os.environ.copy()
             project_root = Path(__file__).parent.parent.parent
             env["PYTHONPATH"] = str(project_root)
 
+            logger.debug(f"Starting subprocess: python3 {script_file}")
+
             result = subprocess.run(
-                ["python", str(script_path)], 
-                capture_output=True, 
-                text=True, 
+                ["python3", str(script_file)],
+                capture_output=True,
+                text=True,
                 timeout=30,
-                env=env
+                env=env,
+                cwd=str(project_root),
             )
 
+            logger.debug(f"Subprocess stdout: {result.stdout}")
+            logger.debug(f"Subprocess stderr: {result.stderr}")
+            logger.debug(f"Return code: {result.returncode}")
+
             if result.returncode == 0:
-                logger.info("Script executed successfully")
+                logger.debug(f"Boot script executed successfully: {script_file}")
                 return {"success": True, "output": result.stdout}
             else:
-                logger.error(f"Script execution failed: {result.stderr}")
-                return {"success": False, "message": result.stderr}
-        
+                logger.error(f"Boot script failed: {result.stderr}")
+                return {"success": False, "error": {"type": "unknown", "e": result.stderr}}
+
         except subprocess.TimeoutExpired:
-            logger.error(f"Script execution timed out for action: {action}")
-            return {"success": False, "message": "Script execution timed out"}
-        
+            logger.error(f"Boot script timeout: {script_file}")
+            return {"success": False, "error": {"type": "unknown", "e": "Script timeout"}}
+
         except Exception as e:
-            logger.error(f"Error executing boot action: {e}")
-            return {"success": False, "message": str(e)}
-    
+            logger.error(f"Error executing boot action: {e}", exc_info=True)
+            return {"success": False, "error": {"type": "unknown", "e": str(e)}}
+        
     def stop(self):
         logger.info("Stopping BootManager")
         self.running = False

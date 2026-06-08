@@ -1,6 +1,7 @@
 import RPi.GPIO as GPIO
 import time
 
+
 def send_boot_signal():
     # Set GPIO-Modus (BCM)
     GPIO.setmode(GPIO.BCM)
@@ -24,7 +25,7 @@ def boot():
     try:
         send_boot_signal()
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": {"type":"unknown", "e":str(e)}}
 
     return {"success": True}
 
@@ -33,13 +34,13 @@ def reboot():
     try:
         send_boot_signal()
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": {"type": "unknown", "e": str(e)}}
 
     time.sleep(5)
 
     try:
         send_boot_signal()
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": {"type": "unknown", "e": str(e)}}
 
     return {"success": True}
