@@ -87,9 +87,7 @@ class BootManager:
             )
 
             if result.returncode == 0:
-                print(result)
                 if action == "start":
-                    # set boot.status to "starting"
                     DatabaseManager.set("host", host_type, {"hostname": hostname}, {"boot.status": "starting"})
 
                 return {"success": True, "output": result.stdout}
