@@ -6,8 +6,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def __init__():
+def run():
     try:
         return relay.boot()
     except Exception as e:
         return {"success": False, "error": {"type": "unknown", "e": str(e)}}
+
+run()
