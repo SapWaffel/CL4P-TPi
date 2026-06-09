@@ -42,7 +42,7 @@ class BootManager:
 
                         if boot_action and host_type and hostname and boot_type:
                             logger.info(f"Executing boot request: {boot_action} via {boot_type} for: {host_type}/{hostname}")
-                            result = self.execute_boot_action(host_type, boot_type, boot_action)
+                            result = self.execute_boot_action(host_type, hostname, boot_type, boot_action)
                             logger.info(f"Boot action result: {result}")
 
                             # Set requested flag to false
@@ -63,7 +63,7 @@ class BootManager:
             logger.error(f"Unexpected error occurred: {e}")
             raise
 
-    def execute_boot_action(self, host_type: str, boot_type: str, action: str) -> dict:
+    def execute_boot_action(self, host_type: str, hostname: str, boot_type: str, action: str) -> dict:
         script_file = self.SCRIPT_PATH / host_type / boot_type / f"{action}.py"
 
         if not script_file.exists():
@@ -86,12 +86,12 @@ class BootManager:
                 cwd=str(project_root),
             )
 
-            logger.debug(f"Subprocess stdout: {result.stdout}")
-            logger.debug(f"Subprocess stderr: {result.stderr}")
-            logger.debug(f"Return code: {result.returncode}")
-
             if result.returncode == 0:
-                logger.debug(f"Boot script executed successfully: {script_file}")
+                print(result)
+                if action == "start":
+                    # set boot.status to "starting"
+                    DatabaseManager.set("host", host_type, {"hostname": hostname}, {"boot.status": "starting"})
+
                 return {"success": True, "output": result.stdout}
             else:
                 logger.error(f"Boot script failed: {result.stderr}")
