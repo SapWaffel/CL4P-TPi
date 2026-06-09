@@ -26,7 +26,7 @@ class ConfigManager:
     def _load_config(self) -> None:
         try:
             if not self.config_path.exists():
-                template_path = self.config_path.parent / "config_template.json"
+                template_path = self.config_path.parent / ".config_template.json"
                 if template_path.exists():
                     import shutil
                     shutil.copy(template_path, self.config_path)
