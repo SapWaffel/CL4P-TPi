@@ -37,3 +37,4 @@ env/
 .DS_Store
 Thumbs.db
 config/config.json
+test.py

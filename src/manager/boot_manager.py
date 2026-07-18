@@ -42,6 +42,7 @@ class BootManager:
 
                         if boot_action and host_type and hostname and boot_type:
                             logger.info(f"Executing boot request: {boot_action} via {boot_type} for: {host_type}/{hostname}")
+                            print(f"Executing boot request: {boot_action} via {boot_type} for: {host_type}/{hostname}")
                             result = self.execute_boot_action(host_type, boot_type, boot_action)
                             logger.info(f"Boot action result: {result}")
 
