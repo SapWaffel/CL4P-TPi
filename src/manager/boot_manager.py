@@ -3,6 +3,7 @@ import logging
 import subprocess
 import time
 import os
+import sys
 from pathlib import Path
 from src.util.db.database_manager import DatabaseManager
 
@@ -79,7 +80,7 @@ class BootManager:
             logger.debug(f"Starting subprocess: python3 {script_file}")
 
             result = subprocess.run(
-                ["python3", str(script_file)],
+                [sys.executable, str(script_file)],
                 capture_output=True,
                 text=True,
                 timeout=30,
