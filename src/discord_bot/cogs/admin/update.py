@@ -7,7 +7,8 @@ import sys
 
 from src.config_manager import ConfigManager, StringManager, StringType 
 from src.util.git_update import GitUpdater
-from src.util.db.database_manager import DatabaseManager
+from src.discord_bot.checks import requre_rights
+from src.models import RightsLevel
 
 logger = logging.getLogger(__name__)
 GUILD_ID = discord.Object(id=ConfigManager.get("discord.guild_id"))
@@ -18,27 +19,8 @@ class UpdateCog(commands.Cog):
 
     @app_commands.command(name="update", description="Fetch the latest changes from git and restart the bot")
     @app_commands.guilds(GUILD_ID)
+    @require_rights(RightsLevel.ADMIN)
     async def update(self, interaction: discord.Interaction):
-
-        rights_level = DatabaseManager.get("discord", "user", {"discord_id": int(interaction.user.id)}, "rights_level")
-        if not rights_level:
-            response = StringManager.get(StringType.WARN, "error.generic")
-            await interaction.response.send_message(response, ephemeral=True)
-            return
-        if rights_level < 3:
-            response = StringManager.get(StringType.WARN, "error.no_permission")
-            await interaction.response.send_message(response, ephemeral=True)
-            return
-
-        if not interaction.user.guild_permissions.administrator:
-            await interaction.response.send_message(
-                StringManager.get(StringType.DENY, "error.no_permission"),
-                ephemeral=True
-            )
-            logger.warning(f"Unauthorized update attempted by {interaction.user}")
-            return
-
-        await interaction.response.defer()
 
         try:
             await interaction.followup.send(StringManager.get(StringType.INFO, "response.update.fetch"))
@@ -47,7 +29,6 @@ class UpdateCog(commands.Cog):
             result = GitUpdater.update()
 
             if result["success"]:
-                #edit message to show the output of the git pull command
                 await interaction.edit_original_response(content=StringManager.get(StringType.INFO, "response.update.success"))
                 logger.info("Update successful, bot is restarting")
 

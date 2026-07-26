@@ -13,6 +13,7 @@ class BootRequestHandler:
             skips = []
             ):
         try:
+
             # 1) check arguments
             valid_host_types = ["hardware", "vm"]
             if host_type not in valid_host_types:
@@ -81,19 +82,22 @@ class BootRequestHandler:
         if restrictions is None or restrictions == []:
             return {"success": True, "pass": True}
         
-        restrictions = [r for r in restrictions if r.get("enabled", False)]
+        enabled_restrictions = [r for r in restrictions if r.get("enabled", False)]
 
-        for r in restrictions:
+        for r in enabled_restrictions:
+
             # 1) ALWAYS_ALLOW
             if r["type"] == "ALWAYS_ALLOW":
                 if r["config"].get(action, False):
                     return {"success": True, "pass": True, "reason": "ALWAYS_ALLOW"}
+                
             # 2) SINGLE_SHOT
             if r["type"] == "SINGLE_SHOT":
                 if r["config"].get(action, False):
                     r["config"][action] = False
                     DatabaseManager.set("host", host_type, {"hostname": hostname}, {"boot.restrictions": restrictions})
                     return {"success": True, "pass": True}
+                
             # 3) WORKING_HOURS
             if r["type"] == "WORKING_HOURS":
                 if r["config"].get(action, False):

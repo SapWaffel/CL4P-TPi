@@ -21,10 +21,14 @@
             "on": "ist **online**.",
             "off": "ist **offline**.",
             "starting": "bootet gerade.",
+            "unknown": "befindet sich in einem unbekannten Zustand.",
             "error": "status konnte nicht abgerufen werden: {error}"
         },
         "request": {
-            "success": "Deine Anfrage wurde akzeptiert! ({action} {hostname})",
+            "pending": "Anfrage angenommen, führe **{action}** auf {hostname} aus...",
+            "success": "**{action}** auf {hostname} wurde erfolgreich ausgeführt!",
+            "failed": "**{action}** auf {hostname} ist fehlgeschlagen: {error}",
+            "timeout": "**{action}** auf {hostname} läuft noch. Der Status wird noch nicht bestätigt - prüfe es in Kürze mit /status.",
             "deny": {
                 "generic": "Deine Anfrage wurde abgelehnt. ({reason})",
                 "reasons": {

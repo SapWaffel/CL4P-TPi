@@ -13,7 +13,7 @@ class User(BaseModel):
     username: str
     avatar: Optional[str] = None
     roles: List[str] = Field(default_factory=list)
-    boot_rights_level: RightsLevel = RightsLevel.BASIC
+    rights_level: RightsLevel = RightsLevel.BASIC
     added_date: datetime = Field(default_factory=datetime.now)
     added_by: Optional[int] = None
     notes: Optional[str] = None
