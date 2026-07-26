@@ -21,6 +21,25 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
+async def global_maintenance_check(interaction: discord.Interaction) -> bool:
+    if not ConfigManager.get("maintenance", False):
+        return True
+
+    rights_level = get_rights_level(interaction.user.id)
+    if rights_level and rights_level >= RightsLevel.ADMIN:
+        return True
+
+    await interaction.response.send_message(
+        StringManager.get(StringType.WARN, "error.maintenance"), ephemeral=True
+    )
+    return False
+
+# hook for the global check to be used in the command tree
+class CL4PiCommandTree(app_commands.CommandTree):
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return await global_maintenance_check(interaction)
+
+
 class CL4PiBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -47,37 +66,23 @@ class CL4PiBot(commands.Bot):
         logging.info("Bot has been closed.")
 
 # Bot
-bot = CL4PiBot(command_prefix="/", intents=intents)
+bot = CL4PiBot(command_prefix="/", intents=intents, tree_cls=CL4PiCommandTree)
 
-# maintenance check
-@bot.tree.check
-async def global_maintenance_check(interaction: discord.Integration) -> bool:
-    # blocks all commands if maintenance mode is enabled for non-admin users
-    if not ConfigManager.get("maintenance", False):
-        return True
 
-    rights_level = get_rights_level(interaction.user.id)
-    if rights_level and rights_level >= RightsLevel.ADMIN:
-        return True
-
-    await interaction.response.send_message(StringManager.get(StringType.WARN, "error.maintenance"), ephemeral=True)
-    return False
-
-# error handling
 @bot.tree.error
 async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     if isinstance(error, app_commands.CheckFailure):
         return
     logging.error(f"Unhandled app command error: {error}", exc_info=error)
 
-# load cogs
+
 async def load_cogs():
     cogs_dir = os.path.join(os.path.dirname(__file__), "cogs")
     for root, dirs, files in os.walk(cogs_dir):
         for file in files:
             if file.endswith(".py") and not file.startswith("__"):
                 rel_path = os.path.relpath(os.path.join(root, file), os.path.dirname(__file__))
-                module = rel_path.replace(os.sep, ".")[:-3]
+                module = rel_path.replace(os.sep, ".")[:-3] 
                 module = f"src.discord_bot.{module}"
                 try:
                     await bot.load_extension(module)
@@ -94,13 +99,13 @@ def run():
         raise ValueError("Bot token is not set in the configuration.")
     if GUILD_ID is None or GUILD_ID.id == 0 or GUILD_ID.id == "YOUR_GUILD_ID":
         raise ValueError("Guild ID is not set in the configuration.")
-
-    logging.info("Starting CL4P-TPi bot...")
+    
+    logger.info("Starting CL4P-TPi Bot...")
 
     try:
         bot.run(TOKEN)
     except Exception as e:
-        logging.error(f"Error running the bot: {e}")
+        logger.error(f"Error running the bot: {e}")
 
 if __name__ == "__main__":
     run()
