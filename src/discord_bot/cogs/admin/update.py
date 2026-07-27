@@ -7,7 +7,7 @@ import sys
 
 from src.config_manager import ConfigManager, StringManager, StringType 
 from src.util.git_update import GitUpdater
-from src.discord_bot.checks import requre_rights
+from src.discord_bot.checks import require_rights
 from src.models import RightsLevel
 
 logger = logging.getLogger(__name__)

@@ -8,7 +8,7 @@ from src.util.db.database_manager import DatabaseManager
 def get_rights_level(discord_id: int):
     return DatabaseManager.get("discord", "user", {"discord_id": int(discord_id)}, "rights_level")
 
-def requre_rights(min_level: RightsLevel):
+def require_rights(min_level: RightsLevel):
     """
     app_commands check for rights level
     usage:

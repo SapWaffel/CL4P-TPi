@@ -4,7 +4,7 @@ from discord import app_commands
 
 from src.config_manager import ConfigManager, StringManager, StringType
 from src.discord_bot.services.update_presence import update_presence
-from src.discord_bot.checks import requre_rights
+from src.discord_bot.checks import require_rights
 from src.models import RightsLevel
 
 GUILD_ID = int(ConfigManager.get("discord.guild_id"))
@@ -15,7 +15,7 @@ class MaintenanceCog(commands.Cog):
     
     @app_commands.guilds(discord.Object(id=GUILD_ID))
     @app_commands.command(name="maintenance", description="Toggle maintenance mode")
-    @requre_rights(RightsLevel.ADMIN)
+    @require_rights(RightsLevel.ADMIN)
     async def maintenance(self, interaction: discord.Interaction):
         current_state = ConfigManager.get("maintenance", False)
         new_state = not current_state
