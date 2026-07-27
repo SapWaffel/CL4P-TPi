@@ -72,7 +72,7 @@ class BootManager:
 
         collection.update_one(
             {"hostname": hostname},
-            {"$set": {"boot.request.state": "running", "boot.request.started_at": datetime.now(tz='UTC')}}
+            {"$set": {"boot.request.state": "running", "boot.request.started_at": datetime.now()}}
         )
 
         result = self.execute_boot_action(host_type, hostname, boot_type, action)
@@ -91,13 +91,13 @@ class BootManager:
         update = {
             "boot.request.requested": False,
             "boot.request.state": "success" if success else "failed",
-            "boot.request.finished_at": datetime.now(tz='UTC'),
+            "boot.request.finished_at": datetime.now(),
             "boot.request.error": error
         }
 
         # save boot time
         if success:
-            update["boot.timestamp"] = datetime.now(tz='UTC')
+            update["boot.timestamp"] = datetime.now()
 
         # update boot status
         if new_status:
