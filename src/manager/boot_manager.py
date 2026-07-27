@@ -112,7 +112,7 @@ class BootManager:
     def execute_boot_action(self, host_type: str, hostname: str, boot_type: str, action: str) -> dict:
 
         # get script file
-        script_file = self.SCRIPT_PATH / host_type / boot_type / f"{action}.sh"
+        script_file = self.SCRIPT_PATH / host_type / boot_type / f"{action}.py"
         if not script_file.exists():
             logger.error(f"Boot script not found: {script_file}")
             return {"success": False, "error": {"type":"unknown", "e": "Boot-Skript nicht gefunden"}}
