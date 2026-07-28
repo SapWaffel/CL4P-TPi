@@ -1,4 +1,5 @@
 import logging
+import time
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 from src.config_manager import ConfigManager
@@ -7,6 +8,8 @@ logger = logging.getLogger(__name__)
 
 class MongoDBClient:
     _instance = None
+    CONNECT_MAX_RETRIES = 10
+    CONNECT_RETRY_DELAY = 2
     
     def __new__(cls):
         if cls._instance is None:
@@ -26,23 +29,32 @@ class MongoDBClient:
         self._initialized = True
     
     def _connect(self, connection_string: str):
-        try:
-            self.client = MongoClient(connection_string, serverSelectionTimeoutMS=5000)
-            self.client.admin.command('ping')
+        last_error = None
+
+        for attempt in range(1, self.CONNECT_MAX_RETRIES + 1):
+            try:
+                self.client = MongoClient(connection_string, serverSelectionTimeoutMS=5000)
+                self.client.admin.command('ping')
+                
+                # Load databases and collections from config
+                db_configs = self.config.get("databases", [])
+                
+                for db_config in db_configs:
+                    db_name = db_config.get("name")
+                    self.databases[db_name] = self.client[db_name]
+                    logger.info(f"Connected to MongoDB database: {db_name}")
+                
+                self._ensure_collections()
+                return
             
-            # Load databases and collections from config
-            db_configs = self.config.get("databases", [])
-            
-            for db_config in db_configs:
-                db_name = db_config.get("name")
-                self.databases[db_name] = self.client[db_name]
-                logger.info(f"Connected to MongoDB database: {db_name}")
-            
-            self._ensure_collections()
-        
-        except ConnectionFailure as e:
-            logger.error(f"Failed to connect to MongoDB: {e}")
-            raise
+            except ConnectionFailure as e:
+                last_error = e
+                logger.warning(f"MongoDB connection attempt failed (attempt {attempt}/{self.CONNECT_MAX_RETRIES}): {last_error}")
+                if attempt < self.CONNECT_MAX_RETRIES:
+                    time.sleep(self.CONNECT_RETRY_DELAY)
+
+            logger.error(f"Failed to connect to MongoDB after {self.CONNECT_MAX_RETRIES} attempts: {last_error}")
+            raise last_error
     
 
     def _ensure_collections(self) -> None:
